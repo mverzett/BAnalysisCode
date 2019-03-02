@@ -1,15 +1,23 @@
 import FWCore.ParameterSet.Config as cms
 #quick config
-IsData=False
+IsData=True
 Run="A"
-output="output_ftest.root"
-RecoBtoKLepLep=True
-RecoBtoKstarLepLep=False
+output="output_KstarMuMu.root"
+RecoBtoKLepLep=False
+RecoBtoKstarLepLep=True
 SkipEventWithNoRecoB=False
-MuonsOnly=False
+MuonsOnly=True
 ElectronsOnly=False
-
+addlostTrk=True
+saveTrk=False
+Nentries=1000
+File=['/store/data/Run2018B/ParkingBPH5/MINIAOD/PromptReco-v1/000/317/650/00000/321646CB-F76E-E811-91FF-FA163EE936A8.root']
 ############
+if RecoBtoKLepLep : 
+   print "reconstructing B->Kll channel"
+if RecoBtoKstarLepLep :
+   print "reconstructing B->K*ll->Kpill channel"
+
 Addel=True
 Onlyel=False
 if MuonsOnly and not ElectronsOnly:
@@ -69,12 +77,12 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag,globaltag, '')
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(Nentries) )
 
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
-#   '/store/data/Run2018B/ParkingBPH5/MINIAOD/PromptReco-v1/000/317/696/00000/FC9982C3-C870-E811-96ED-FA163EECEDCF.root'
+    File
 #for aod comparison
 # '/store/data/Run2018A/ParkingBPH1/MINIAOD/14May2018-v1/30000/F637E740-F259-E811-B4BB-782BCB3B1A58.root'
 #'/store/user/tstreble/BToKee_Pythia/BToKee_Pythia_MINIAODSIM_18_03_21/180319_172427/0001/BToKee_MINIAODSIM_1727.root'
@@ -84,7 +92,7 @@ process.source = cms.Source("PoolSource",
 #fastsim
 #"file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/BtoKppmunu_production/CMSSW_9_3_6/src/step3_PAT.root"
 #'/store/group/cmst3/user/gkaratha/PAT_FastSim_GenBToKEE_NonD_muFilter_ForProbe_try1/CRAB_UserFiles/crab_PAT_FastSim_GenBToKEE_NonD_muFilter_ForProbe_try1/190129_202905/0000/step3_PAT_2.root'
-'/store/mc/RunIIAutumn18MiniAOD/BuToK_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v3/90000/FE81DFA9-EA47-764C-842D-1F7A31327500.root'
+#'/store/mc/RunIIAutumn18MiniAOD/BuToK_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v3/90000/FE81DFA9-EA47-764C-842D-1F7A31327500.root'
   ),
    secondaryFileNames=cms.untracked.vstring(
 ),
@@ -146,7 +154,7 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
  #                              tracks=cms.InputTag("unpackedTracksAndVertices"),
 
                                RunParameters = cms.PSet(
-      Data= cms.bool(IsData),SaveTracks=cms.bool(False),
+      Data= cms.bool(IsData),SaveTracks=cms.bool(saveTrk),
       SaveHLT=cms.bool(HLTsave),SaveL1=cms.bool(L1save),
       SaveResultsOnlyIfAPathFired=cms.bool(HLTsave),
       ReconstructBMuMuK=cms.bool(RecoBtoKLepLep),
@@ -159,10 +167,11 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
       AddeeK=cms.bool(Addel),MLLmax_Cut=cms.double(5),MLLmin_Cut=cms.double(0),
       MBmin_Cut=cms.double(4.5),
       MBmax_Cut=cms.double(6),EtaTrk_Cut=cms.double(2.5),
-      MKstarMin_Cut=cms.double(0.5),MKstarMax_Cut=cms.double(1),
-      LepTrkExclusionCone=cms.double(0.005),AddLostTracks=cms.bool(False),
-      RefitTracks=cms.bool(False),RefitMuTracksOnly=cms.bool(False),
-      OnlyKee=cms.bool(Onlyel),UsePFeForCos=cms.bool(True)
+      MKstarMin_Cut=cms.double(0.742),MKstarMax_Cut=cms.double(1.042),
+      LepTrkExclusionCone=cms.double(0.005),AddLostTracks=cms.bool(addlostTrk),
+      RefitTracks=cms.bool(False),RefitMuTracksOnly=cms.bool(True),
+      OnlyKee=cms.bool(Onlyel),UsePFeForCos=cms.bool(True),
+      SkipEventWithNoBToMuMuKstar=cms.bool(SkipNoKsLL)
   ),
 )
 
@@ -195,4 +204,6 @@ process.p = cms.Path(
    )
    
 #process.endjob=cms.EndPath(process.fevt)
+#samples
+#'/store/mc/RunIIAutumn18MiniAOD/BuToK_ToMuMu_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v2/80000/FBEB6F2C-3302-9C4E-9E9D-F253120EC027.root'
 
