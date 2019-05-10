@@ -89,7 +89,9 @@ void NtupleContent::ClearVariables(){
    NRbks_ex_ey_ez.clear(); NRbks_ept_eeta_ephi.clear(); 
    NRbks_l2pt_eta_phi.clear(); NRbks_l1pt_eta_phi.clear(); 
    NRbks_Kpt_eta_phi.clear(); NRbks_Pipt_eta_phi.clear(); 
+   NRbks_KUNFITpt_eta_phi.clear(); NRbks_PiUNFITpt_eta_phi.clear(); 
    NRbks_mudecay.clear(); NRbks_lep1Id.clear(); NRbks_lep2Id.clear();
+   NRbks_trkpair_index.clear();
    //gen
   ngenB=0,ngenLep=0;
   genB_pt.clear(); genB_phi.clear(); genB_eta.clear(); genB_pdgId.clear();
@@ -105,7 +107,7 @@ void NtupleContent::ClearVariables(){
 }
 
 void NtupleContent::SetNtupleVariables(TString Vars){
-  bool writeGen=false,writeTrk=false,writeKll=false,writeKstarll=false,writeLowPtEl=false,writeLowPtGsf=false,writePFel=false; 
+  bool writeGen=false,writeTrk=false,writeKll=false,writeKstarll=false,writeLowPtEl=false,writeLowPtGsf=false,writePFel=false,Lite=false; 
   if (Vars.Contains("ALL")){
     writeGen=true,writeTrk=true,writeKll=true,writeKstarll=true,writeLowPtEl=true,writeLowPtGsf=true,writePFel=true;}
   if (Vars.Contains("GEN"))
@@ -122,10 +124,48 @@ void NtupleContent::SetNtupleVariables(TString Vars){
      writeLowPtGsf=true;
   if(Vars.Contains("PFel"))
      writePFel=true;
+  if (Vars.Contains("Lite"))
+     Lite=true;
+
   t1->Branch("event",&event); t1->Branch("run_number",&run_number);
   t1->Branch("ls",&ls);
   t1->Branch("beam_x",&beam_x); t1->Branch("beam_y",&beam_y);
-  t1->Branch("beam_z",&beam_z); t1->Branch("beam_ex",&beam_ex);
+  t1->Branch("beam_z",&beam_z); 
+  
+  if (Lite){
+   t1->Branch("vertex_x",&vertex_x); t1->Branch("vertex_y",&vertex_y);
+   t1->Branch("vertex_z",&vertex_z);
+   t1->Branch("HLT_path1",&trigger1); t1->Branch("HLT_path2",&trigger2);
+   t1->Branch("HLT_path3",&trigger3); t1->Branch("HLT_path4",&trigger4);
+   t1->Branch("HLT_path5",&trigger5); t1->Branch("HLT_path6",&trigger6);
+   t1->Branch("HLT_path7",&trigger7); t1->Branch("HLT_path8",&trigger8);
+   t1->Branch("L1_seed1",&l1_seed1); t1->Branch("L1_seed2",&l1_seed2);
+   t1->Branch("L1_seed3",&l1_seed3); t1->Branch("L1_seed4",&l1_seed4);
+   t1->Branch("L1_seed5",&l1_seed5); t1->Branch("L1_seed6",&l1_seed6);
+   t1->Branch("nmuon",&nmuons); t1->Branch("muon_pt",&muon_pt);
+   t1->Branch("muon_eta",&muon_eta); t1->Branch("muon_phi",&muon_phi);
+   t1->Branch("muon_charge",&muon_charge); t1->Branch("muon_dxy",&muon_dxy);
+   t1->Branch("muon_edxy",&muon_edxy); t1->Branch("muon_soft",&muon_soft);
+   t1->Branch("muon_trgIndex",&muon_trgIndex); t1->Branch("nelectron",&nel);
+   t1->Branch("el_pt",&el_pt); t1->Branch("el_eta",&el_eta);
+   t1->Branch("el_phi",&el_phi); t1->Branch("el_charge",&el_charge);
+   t1->Branch("el_mva_unbiased",&el_mva_unbiased);
+   t1->Branch("el_islowpt",&el_islowpt);
+    t1->Branch("NRb_pt_eta_phi",&NRb_pt_eta_phi); t1->Branch("NRb_mass",&NRb_mass);
+   t1->Branch("NRb_chi_prob",&NRb_chi_prob); t1->Branch("NRb_mudecay",&NRb_mudecay);
+   t1->Branch("NRb_Kpt_eta_phi_charge",&NRb_Kpt_eta_phi);
+   t1->Branch("NRb_KUNFITpt_eta_phi",&NRb_KUNFITpt_eta_phi);
+   t1->Branch("NRb_charge",&NRb_charge);
+   t1->Branch("NRb_l1pt_eta_phi_charge",&NRb_l1pt_eta_phi);
+   t1->Branch("NRb_l2pt_eta_phi_charge",&NRb_l2pt_eta_phi);
+   t1->Branch("NRb_lep1Id",&NRb_lep1Id); t1->Branch("NRb_lep2Id",&NRb_lep2Id);     t1->Branch("NRb_trk_chi_norm",&NRb_trk_chi_norm);
+   t1->Branch("NRb_bspot_lxy",&NRb_bspot_lxy);
+   t1->Branch("NRb_bspot_elxy",&NRb_bspot_elxy);
+   t1->Branch("NRb_cosTheta2D",&NRb_cosTheta2D);
+  }
+
+
+  t1->Branch("beam_ex",&beam_ex);
   t1->Branch("beam_ey",&beam_ey); t1->Branch("beam_ez",&beam_ez);
   t1->Branch("pvertex_x",&pvertex_x); t1->Branch("pvertex_y",&pvertex_y);
   t1->Branch("pvertex_z",&pvertex_z); t1->Branch("pvertex_ex",&pvertex_ex);
@@ -280,7 +320,7 @@ void NtupleContent::SetNtupleVariables(TString Vars){
 } 
 //B->K*ll
 if (writeKstarll){
-  t1->Branch("NRbks_k_sdxy",&NRbks_k_sdxy); t1->Branch("NRbks_pi_sdxy",&NRbks_pi_sdxy);
+  
   t1->Branch("NRbks_mass",&NRbks_mass); t1->Branch("NRbks_charge",&NRbks_charge);
   t1->Branch("NRbks_chi_prob",&NRbks_chi_prob);
   t1->Branch("NRbks_bspot_lxy",&NRbks_bspot_lxy);
@@ -297,6 +337,10 @@ if (writeKstarll){
   t1->Branch("NRbks_l1pt_eta_phi",&NRbks_l1pt_eta_phi);
   t1->Branch("NRbks_l2pt_eta_phi",&NRbks_l2pt_eta_phi);
   t1->Branch("NRbks_mll",&NRbks_mll); t1->Branch("NRbks_ksmass",&NRbks_ksmass);
+  t1->Branch("NRbks_KUNFITpt_eta_phi",&NRbks_KUNFITpt_eta_phi);
+  t1->Branch("NRbks_PiUNFITpt_eta_phi",&NRbks_PiUNFITpt_eta_phi);
+  t1->Branch("NRbks_trkpair_index",&NRbks_trkpair_index);
+  t1->Branch("NRbks_k_sdxy",&NRbks_k_sdxy); t1->Branch("NRbks_pi_sdxy",&NRbks_pi_sdxy);
 }
 
  

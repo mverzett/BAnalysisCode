@@ -67,8 +67,10 @@ public:
    NRbks_cosTheta2D,NRbks_mll,NRbks_ksmass; 
    std::vector<std::vector<float>> NRbks_pt_eta_phi,NRbks_x_y_z,
    NRbks_ex_ey_ez,NRbks_ept_eeta_ephi,NRbks_l2pt_eta_phi,
-   NRbks_l1pt_eta_phi,NRbks_Kpt_eta_phi,NRbks_Pipt_eta_phi; 
+   NRbks_l1pt_eta_phi,NRbks_Kpt_eta_phi,NRbks_Pipt_eta_phi,
+   NRbks_KUNFITpt_eta_phi,NRbks_PiUNFITpt_eta_phi; 
    std::vector<unsigned int> NRbks_mudecay,NRbks_lep1Id, NRbks_lep2Id;
+   std::vector<int> NRbks_trkpair_index;
    //gen
    float ngenB,ngenLep;
   std::vector<float> genB_pt,genB_phi,genB_eta,genB_pdgId,genB_Bindex,

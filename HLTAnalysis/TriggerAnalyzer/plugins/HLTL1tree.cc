@@ -1,6 +1,6 @@
 #include "HLTL1tree.h"
 
-HLTL1tree::HLTL1tree(const edm::Event& iEvent,edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_, edm::EDGetToken l1MuonsToken_,edm::EDGetToken l1JetsToken_,edm::EDGetToken l1MetToken_,edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_,edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_)
+HLTL1tree::HLTL1tree(const edm::Event& iEvent,edm::EDGetTokenT<GlobalAlgBlkBxCollection> & l1resultToken_, edm::EDGetToken & l1MuonsToken_,edm::EDGetToken & l1JetsToken_,edm::EDGetToken & l1MetToken_,edm::EDGetTokenT<edm::TriggerResults> & trgresultsToken_,edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> & trigobjectsToken_)
 {
   iEvent.getByToken(l1resultToken_,l1result);
   iEvent.getByToken(l1MuonsToken_,l1Muons);
@@ -33,7 +33,7 @@ void HLTL1tree::L1objetcs(NtupleContent& nt){
   }
 }
 
-void HLTL1tree::L1trigger(TString * algoBitToName,std::vector<std::string> seed){
+void HLTL1tree::L1trigger(TString * algoBitToName,std::vector<std::string> & seed){
   if (!l1valid) {
    for (unsigned int iseed=0; iseed<seed.size(); iseed++)
      l1seeds.push_back(false);

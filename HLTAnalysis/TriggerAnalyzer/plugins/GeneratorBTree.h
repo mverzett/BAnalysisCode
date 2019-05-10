@@ -52,7 +52,7 @@ public:
 private:
   edm::Handle<edm::View<reco::GenParticle> > pruned;
   edm::Handle<edm::View<pat::PackedGenParticle> > packed;
-  std::vector<float> BMotherPt,BMotherEta,BMotherPhi,BMotherPdgId,BMotherBid;
+  std::vector<float> BMotherPt,BMotherEta,BMotherPhi,BMotherPdgId,BMotherBid,BMotherM;
   std::vector<float> BDaughterPt,BDaughterEta,BDaughterPhi,BDaughterPdgId,BDaughterBid,BDaughterDid;
   std::vector<float> BGDaughterPt,BGDaughterEta,BGDaughterPhi,BGDaughterPdgId,BGDaughterBid,BGDaughterDid;
   std::vector<float> genLepPt,genLepEta,genLepPhi,genLepPdgId,genLepMother;

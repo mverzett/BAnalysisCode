@@ -3,19 +3,18 @@
 #include "DataFormats/Candidate/interface/LeafCandidate.h"
 
 
-GeneratorBTree::GeneratorBTree(edm::EDGetTokenT<edm::View<reco::GenParticle> > & prunedGenToken_,edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > & packedGenToken_,const edm::Event& iEvent){
-  
- 
+GeneratorBTree::GeneratorBTree(edm::EDGetTokenT<edm::View<reco::GenParticle> > & prunedGenToken_,edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > & packedGenToken_,const edm::Event& iEvent){  
    iEvent.getByToken(prunedGenToken_,pruned);
    iEvent.getByToken(packedGenToken_,packed);
-
+  
    finalLeptonsTracks( pruned, packed); float IB=0;
    for(const reco::GenParticle & gen: *pruned){
      if((gen.pdgId()%1000)/100!=5 && (gen.pdgId()%10000)/1000!=5 && (gen.pdgId()%1000)/100!=-5 && (gen.pdgId()%10000)/1000!=-5) continue;
      if (isExcitedB(gen)) continue;
+      TLorentzVector vel1,vel2,vk;
       BMotherPt.push_back(gen.pt()); BMotherEta.push_back(gen.eta()); 
       BMotherPhi.push_back(gen.phi()); BMotherPdgId.push_back(gen.pdgId()); 
-      BMotherBid.push_back(IB);
+      BMotherBid.push_back(IB); BMotherM.push_back(gen.mass());
       float ID=0;
       for (unsigned int idaughter=0; idaughter<gen.numberOfDaughters(); idaughter++){
         const reco::Candidate & daught=*(gen.daughter(idaughter));
@@ -33,7 +32,7 @@ GeneratorBTree::GeneratorBTree(edm::EDGetTokenT<edm::View<reco::GenParticle> > &
             BGDaughterBid.push_back(IB); BGDaughterBid.push_back(IB);
             BGDaughterDid.push_back(ID); BGDaughterDid.push_back(ID);
          }
-        }
+       }
         for (unsigned int igdaughter=0; igdaughter<daught.numberOfDaughters(); igdaughter++){ 
             const reco::Candidate & gdaught=*(daught.daughter(igdaughter));
             BGDaughterPt.push_back(gdaught.pt());  BGDaughterEta.push_back(gdaught.eta());
@@ -102,7 +101,7 @@ void GeneratorBTree::GenKLepLepEtaPhi(bool ResonantDecay,int BpdgId,int Daughter
    unsigned int intmax=std::numeric_limits<unsigned int>::max();
    unsigned int Kindex=intmax,Lepindex=intmax,aLepindex=intmax;
    for (unsigned int idaughter=0; idaughter<BDaughterPt.size(); idaughter++){
-     if (BGDaughterBid.at(idaughter)!=BMotherBid.at(ib)) continue;
+     if (BDaughterBid.at(idaughter)!=BMotherBid.at(ib)) continue;
      if (fabs(BDaughterPdgId.at(idaughter))==DaughterHadronId)
         Kindex=idaughter;
      if (!ResonantDecay){
@@ -119,7 +118,7 @@ void GeneratorBTree::GenKLepLepEtaPhi(bool ResonantDecay,int BpdgId,int Daughter
           if (BGDaughterPdgId.at(igdaughter)==-1*DaughterLepId)
              aLepindex=igdaughter;
         }
-     } 
+     }    
    }//dauthers loop
    if (Kindex==intmax || Lepindex==intmax || aLepindex==intmax)
       continue;
@@ -132,8 +131,9 @@ void GeneratorBTree::GenKLepLepEtaPhi(bool ResonantDecay,int BpdgId,int Daughter
       EtaPhiLep=std::make_pair(BGDaughterEta.at(Lepindex),BGDaughterPhi.at(Lepindex));
       EtaPhiaLep=std::make_pair(BGDaughterEta.at(aLepindex),BGDaughterPhi.at(aLepindex));
     }
-     break;
- }//B loop
+    break;
+    }//B loop
+ 
  if (!found){
    EtaPhiHadron=std::make_pair(-10,-10); EtaPhiLep=std::make_pair(-10,-10);
    EtaPhiaLep=std::make_pair(-10,-10);

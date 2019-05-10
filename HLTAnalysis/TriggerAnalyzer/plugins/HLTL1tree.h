@@ -19,10 +19,10 @@
 class HLTL1tree{
 
  public:
-  HLTL1tree(const edm::Event& iEvent,edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_, edm::EDGetToken l1MuonsToken_,edm::EDGetToken l1JetsToken_,edm::EDGetToken l1MetToken_,edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_,  edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_);
+  HLTL1tree(const edm::Event& iEvent,edm::EDGetTokenT<GlobalAlgBlkBxCollection> & l1resultToken_, edm::EDGetToken & l1MuonsToken_,edm::EDGetToken & l1JetsToken_,edm::EDGetToken & l1MetToken_,edm::EDGetTokenT<edm::TriggerResults> & trgresultsToken_,  edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> & trigobjectsToken_);
   ~HLTL1tree();
   void L1objetcs(NtupleContent& nt);
-  void L1trigger(TString * algoBitToName,std::vector<std::string> seed);
+  void L1trigger(TString * algoBitToName,std::vector<std::string> &seed);
   void HLTtrigger(std::vector<std::string>& HLTPaths);
   std::vector<bool> GetL1Decision() {return l1seeds;}
   std::vector<bool> GetHLTDecision() {return hltpaths;}
