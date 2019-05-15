@@ -2,31 +2,33 @@ import FWCore.ParameterSet.Config as cms
 #quick config
 
 
-IsData=True
-Run="B"
-Nentries=10000;  output="output_impr1.root"; 
-saveTrk=True; NtupleClasses="auto"; #all or auto or class
-UseLowpTe=False; LowPtElCollection=False;
-LowPtGsfTrkCollection=False; PFelCollection=False;
-elcuts=dict(El1Pt=-1.5,El2Pt=-0.5,Dz=1000.7,El1WP=-30.0,El2WP=-30.0)
-RecoBtoKLepLep=False; RecoBtoKstarLepLep=False; SkipEventWithNoRecoB=False
+IsData=False
+Run="D"
+Nentries=10000;  output="output_hybrid_test.root"; mlog=1000; 
+saveTrk=True; NtupleClasses="auto"; #options: all,auto,class,lite or flat
+TrgMuCone=0.03
+UseLowpTe=True; LowPtElCollection=False; CombinePFLowPtEl=False;
+LowPtGsfTrkCollection=False; PFelCollection=True;
+elcuts=dict(El1Pt=0.5,El2Pt=0.5,Dz=1000.7,El1WP=-10.2,El2WP=-10.2,PFLowPtCone=0.03)
+TrkPtCut=0.5
+RecoBtoKLepLep=True; RecoBtoKstarLepLep=False; SkipEventWithNoRecoB=False
 MuonsOnly=False; ElectronsOnly=True; addlostTrk=True
-Bcuts=dict(Prob=0.01,Cos=0.9,MinM=4.7,MaxM=5.8,MinMll=2.6,MaxMll=3.4);
-GenRecoMatch=False
+Bcuts=dict(Prob=-0.01,Cos=-10.9,MinM=-4.5,MaxM=60,MinMll=0,MaxMll=5);
+GenRecoMatch=True
 Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
-'/store/data/Run2018B/ParkingBPH5/MINIAOD/PromptReco-v1/000/317/650/00000/321646CB-F76E-E811-91FF-FA163EE936A8.root'
+#'/store/data/Run2018B/ParkingBPH5/MINIAOD/PromptReco-v1/000/317/650/00000/321646CB-F76E-E811-91FF-FA163EE936A8.root'
 #'/store/mc/RunIIAutumn18MiniAOD/BdToKstar_ToMuMu_MuFilter_SoftQCDnonD_TuneCP5_13Tev-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v2/80000/F43AD69B-A44E-534B-A195-1C974990B8C6.root'
 #'/store/data/Run2018D/ParkingBPH4/MINIAOD/20Mar2019-v1/110000/A336D5D0-93A3-D944-A82A-8FA4165A5B2B.root'
 #'/store/data/Run2018D/ParkingBPH1/MINIAOD/20Mar2019-v1/120000/35C993A3-575A-184B-AA17-035629397EDE.root'
 #crash #189 evt
-#'/store/data/Run2018D/ParkingBPH1/MINIAOD/20Mar2019-v1/120001/AEB02B66-24FE-3447-A8DA-5119A62D85B8.root'
 #crash #3 evt
 #'/store/data/Run2018D/ParkingBPH1/MINIAOD/20Mar2019-v1/120001/44BD5BCD-3EE9-9741-89B6-CB81EE485DA7.root'
-#'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_135.root'
+'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_135.root'
 #'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/BtoKppmunu_production/CMSSW_10_2_14/src/BPH-RunIIAutumn18MiniAOD-00001.root'
 #'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/HLT/efficiency/Analizer/LostTrackFix/CMSSW_10_5_0/src/step2.root'
 #'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/HLT/efficiency/Analizer/LostTrackFix/CMSSW_10_5_0/src/step2.root'
+#'/store/mc/RunIIAutumn18MiniAOD/BuToK_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v3/90000/FE81DFA9-EA47-764C-842D-1F7A31327500.root'
 ]
 ############ for debug
  #eventsToProcess=cms.untracked.VEventRange('324293:564:1047993750-324293:564:MAX'),
@@ -35,8 +37,18 @@ File=[
 ##########
 electron_container="slimmedElectrons"
 if UseLowpTe:
+  print "Low pT e collection instead of PF e."
   electron_container="slimmedLowPtElectrons"
-   
+
+electron_container2="slimmedElectrons"
+if CombinePFLowPtEl or UseLowpTe or LowPtElCollection or LowPtGsfTrkCollection:
+  electron_container2="slimmedLowPtElectrons"
+
+if CombinePFLowPtEl and UseLowpTe:
+  print "requested to use low pT as complementary and primary collection -> impossible, using PF as primary"
+if CombinePFLowPtEl:
+  print "Both collection of e will be used."   
+
 if RecoBtoKLepLep : 
    print "reconstructing B->K(J/psi)ll channel"
 if RecoBtoKstarLepLep :
@@ -77,7 +89,7 @@ L1save=False ; HLTsave=False ; HLTfired=False
 if IsData:
    print "We have established we Run on data"
    globaltag='101X_dataRun2_Prompt_v11'
-   L1save=True ; HLTsave=True ; HLTfired=False
+   L1save=True ; HLTsave=True ; HLTfired=True
 else:
    print "We have established we Run on MC"
 print "Run parameters ",globaltag," save L1 ",L1save," HLT ",HLTsave," save ev. if path fired ",HLTfired
@@ -95,7 +107,7 @@ process.load('PhysicsTools.PatAlgos.slimming.unpackedTracksAndVertices_cfi')
 #    ignoreTotal = cms.untracked.int32(1)
 #)
 
-process.MessageLogger.cerr.FwkReport.reportEvery = 10000
+process.MessageLogger.cerr.FwkReport.reportEvery = mlog #Nentries/100
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -139,7 +151,7 @@ for idmod in my_id_modules:
 process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
                               beamSpot = cms.InputTag('offlineBeamSpot'),
                               electrons    = cms.InputTag(electron_container),
-                              lowptElectrons =cms.InputTag("slimmedLowPtElectrons"),
+                              lowptElectrons =cms.InputTag(electron_container2),
                               lowptGsftracks=cms.InputTag("lowPtGsfEleGsfTracks"),
                               pfElectrons =cms.InputTag("slimmedElectrons"),
                               vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
@@ -175,12 +187,11 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
       SaveResultsOnlyIfAPathFired=cms.bool(HLTsave),
       ReconstructBMuMuK=cms.bool(RecoBtoKLepLep),
       ReconstructBMuMuKstar=cms.bool(RecoBtoKstarLepLep),
-      
-      MuonPtCutForB=cms.double(1.5),TrackPtCutForB=cms.double(1.0),
+      MuonPtCutForB=cms.double(1.5),TrackPtCutForB=cms.double(TrkPtCut),
       EtaTrk_Cut=cms.double(2.5),
       #electroncuts
       Electron1PtCut=cms.double(elcuts["El1Pt"]),Electron2PtCut=cms.double(elcuts["El2Pt"]),
-      ElectronDzCut=cms.double(elcuts["Dz"]), TrgConeCut=cms.double(-0.1), 
+      ElectronDzCut=cms.double(elcuts["Dz"]), TrgConeCut=cms.double(TrgMuCone), 
       IsLowpTE=cms.bool(UseLowpTe), MVAEl1Cut=cms.double(elcuts["El1WP"]),
       MVAEl2Cut=cms.double(elcuts["El2WP"]),PointingConstraint=cms.bool(False),
       CosThetaCutPointCons=cms.bool(False), UseClosestVertex=cms.bool(False),
@@ -189,7 +200,7 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
       MLLmin_Cut=cms.double(Bcuts["MinMll"]),
       MBmin_Cut=cms.double(Bcuts["MinM"]),MBmax_Cut=cms.double(Bcuts["MaxM"]),
       CosThetaCut=cms.double(Bcuts["Cos"]),ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
-      
+      CombineElCol=cms.bool(CombinePFLowPtEl),CombineCone=cms.double(elcuts["PFLowPtCone"]),
       MKstarMin_Cut=cms.double(0.742),MKstarMax_Cut=cms.double(1.042),
       LepTrkExclusionCone=cms.double(0.005),AddLostTracks=cms.bool(addlostTrk),
       RefitTracks=cms.bool(False),RefitMuTracksOnly=cms.bool(True),

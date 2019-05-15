@@ -19,8 +19,8 @@ void LowPtElObjects::AddElectrons(NtupleContent & nt){
     if (!el.passConversionVeto()) continue;
     reco::GsfTrackRef seed = el.gsfTrack();
     if (seed.isNull()) continue;
-    nt.lowel_pt.push_back(el.pt()); nt.lowel_eta.push_back(el.eta());  
-    nt.lowel_phi.push_back(el.phi()); nt.lowel_charge.push_back(el.charge()); 
+    nt.lowel_pt.push_back(seed->ptMode()); nt.lowel_eta.push_back(seed->etaMode());  
+    nt.lowel_phi.push_back(seed->phiMode()); nt.lowel_charge.push_back(el.charge()); 
     nt.lowel_vx.push_back(el.vx()); nt.lowel_vy.push_back(el.vy());
     nt.lowel_vz.push_back(el.vz());  const reco::Track * trk=el.bestTrack();
     nt.lowel_trkpt.push_back(trk->pt()); nt.lowel_trketa.push_back(trk->eta()); 

@@ -711,6 +711,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     /*  std::vector<std::vector<float>> mu_DCA=track_DCA(muttks);
   if (mu_DCA.size()==0) { std::vector<float> d1; d1.push_back(-99); muon_DCA.push_back(d1); }
   else muon_DCA=mu_DCA;*/
+   std::vector<unsigned int> trkIndex;
   tracks.clear();  
   for (const pat::PackedCandidate &trk : *tracks1) {
    if (!trk.trackHighPurity()) continue;
@@ -722,28 +723,35 @@ if (AddLostTracks){
 
  if (saveTracks){
   for (const pat::PackedCandidate &trk : tracks){      
-   if (trk.pt()<0.2) continue;
    if(trk.charge()==0) continue;
-   if(fabs(trk.pdgId())==11 || fabs(trk.pdgId())==13 || fabs(trk.pdgId())==22 || fabs(trk.pdgId())==130) continue;
-   bool skip=false;
-   for (unsigned int i=0; i<nt.muon_eta.size(); i++){
-     if (DR(nt.muon_eta[i],nt.muon_phi[i],trk.eta(),trk.phi())<0.02) skip=true;
+   if(fabs(trk.pdgId())!=211) continue;
+   if(!trk.hasTrackDetails())continue;
+   if (trk.pt()< track_pt_cut_forB) continue;
+   if (fabs(trk.eta())>EtaTrk_Cut) continue;
+   if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
+   if (UseDirectlyGenBeeK){
+      if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)
+	continue;
+    } 
+   bool isMu=false; bool isE=false;
+   for (int imu=0; imu<nt.nmuons; ++imu){
+     if (DR(nt.muon_eta.at(imu),nt.muon_phi.at(imu),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
    }
-   if (!IsLowpTE){
-     for (unsigned int i=0; i<nt.el_eta.size(); i++){
-       if (DR(nt.el_eta[i],nt.el_phi[i],trk.eta(),trk.phi())<0.02) skip=true;
-     }
+   if (!CombineElCol && !IsLowpTE){
+    for (int iel=0; iel<nt.nel; ++iel) {     
+      if (DR(nt.el_eta.at(iel),nt.el_phi.at(iel),trk.eta(),trk.phi())<LepTrkExclusionCone && !nt.el_islowpt.at(iel)) isE=true;}
+   } else if (CombineElCol){
+     for (unsigned int iel=0; iel<PFe_EtaPhi.size(); ++iel) {
+     if (DR(PFe_EtaPhi.at(iel).first,PFe_EtaPhi.at(iel).second,trk.eta(),trk.phi())<LepTrkExclusionCone && !nt.el_islowpt.at(iel)) isE=true;}
    }
-   if (skip) continue;
+   if(isMu || isE ) continue;
+   trkIndex.push_back(nt.ntracks);
    nt.track_pt.push_back(trk.pt()); nt.track_eta.push_back(trk.eta());
    nt.track_phi.push_back(trk.phi()); nt.track_charge.push_back(trk.charge());
    if(trk.trackHighPurity()) nt.track_highPurity.push_back(1);
    else nt.track_highPurity.push_back(0);
-   if(trk.hasTrackDetails()){  
-     const reco::Track ptrk= trk.pseudoTrack();
-     nt.track_norm_chi2.push_back(ptrk.normalizedChi2());
-   }
-   else nt.track_norm_chi2.push_back(-1);
+   const reco::Track ptrk= trk.pseudoTrack();
+   nt.track_norm_chi2.push_back(ptrk.normalizedChi2());
    nt.track_dxy.push_back(trk.dxy(vertex_point));
    nt.track_dz.push_back(trk.dz(vertex_point));
    nt.track_validhits.push_back(trk.numberOfHits());
@@ -809,7 +817,7 @@ std::vector<reco::TransientTrack> vKTrack;
 if((used_muTrack_index.size()>0 || used_eTrack_index.size()>0) &&( reconstructBMuMuK || reconstructBMuMuKstar)){
 for ( const pat::PackedCandidate & trk: tracks){
   index++;
-  if(trk.charge()==0) continue;
+   if(trk.charge()==0) continue;
    if(fabs(trk.pdgId())!=211) continue;
    if(!trk.hasTrackDetails())continue;
    if (trk.pt()< track_pt_cut_forB) continue;
@@ -840,7 +848,6 @@ for ( const pat::PackedCandidate & trk: tracks){
 KstarTrack.clear(); KstarTrack_index.clear();
 //float beam_xz_=theBeamSpot->dxdz(); float beam_yz_=theBeamSpot->dydz();
 //BKlldecay kll(nmupairs,used_muTrack_index,vmuTrack1,vmuTrack2,vKTrack,beam_xz_,beam_yz_,false);
-
 
 if (reconstructBMuMuKstar){
   for(unsigned int iks=0; iks<KTrack_index.size(); iks++){
@@ -954,7 +961,8 @@ if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuK){
      nt.NRb_cosTheta2D.push_back(vperp.Dot(pperp)/(vperp.R()*pperp.R()));
      nt.NRb_bspot_lxy.push_back( Dispbeamspot.perp());
      nt.NRb_bspot_elxy.push_back(fitter.Mother_XYZError().rerr(Dispbeamspot));
-     nt.NRb_trk_sdxy.push_back(KTrack.at(ik)->track().dxy(vertex_point)/KTrack.at(ik)->track().dxyError());      
+     nt.NRb_trk_sdxy.push_back(KTrack.at(ik)->track().dxy(vertex_point)/KTrack.at(ik)->track().dxyError()); 
+     if (saveTracks) nt.NRb_trkId.push_back(ik);     
      nt.NRb_mass.push_back(fitter.Mother_Mass(RefitTracks)); 
      std::vector<float> tempK; tempK.push_back(vk.Pt());
      tempK.push_back(vk.Eta()); tempK.push_back(vk.Phi());
@@ -1190,6 +1198,39 @@ template<typename T1>
 void 
 TriggerAnalyzer<T1>::endJob() 
 {
+  if ( NtupleOutputClasses=="flat"){
+    for (unsigned int ib=0; ib<nt.NRb_pt_eta_phi.size(); ib++){
+      nt.NRb_pt.emplace_back(nt.NRb_pt_eta_phi[ib][0]);
+      nt.NRb_eta.emplace_back(nt.NRb_pt_eta_phi[ib][1]);
+      nt.NRb_phi.emplace_back(nt.NRb_pt_eta_phi[ib][2]);
+      nt.NRb_Kpt.emplace_back(nt.NRb_Kpt_eta_phi[ib][0]);
+      nt.NRb_Keta.emplace_back(nt.NRb_Kpt_eta_phi[ib][1]);
+      nt.NRb_Kphi.emplace_back(nt.NRb_Kpt_eta_phi[ib][2]);
+      nt.NRb_l1pt.emplace_back(nt.NRb_l1pt_eta_phi[ib][0]);
+      nt.NRb_l1eta.emplace_back(nt.NRb_l1pt_eta_phi[ib][1]);
+      nt.NRb_l1phi.emplace_back(nt.NRb_l1pt_eta_phi[ib][2]);
+      nt.NRb_l2pt.emplace_back(nt.NRb_l2pt_eta_phi[ib][0]);
+      nt.NRb_l2eta.emplace_back(nt.NRb_l2pt_eta_phi[ib][1]);
+      nt.NRb_l2phi.emplace_back(nt.NRb_l2pt_eta_phi[ib][2]);
+    }
+   for (unsigned int ib=0; ib<nt.NRbks_pt_eta_phi.size(); ib++){
+      nt.NRbks_pt.emplace_back(nt.NRbks_pt_eta_phi[ib][0]);
+      nt.NRbks_eta.emplace_back(nt.NRbks_pt_eta_phi[ib][1]);
+      nt.NRbks_phi.emplace_back(nt.NRbks_pt_eta_phi[ib][2]);
+      nt.NRbks_Kpt.emplace_back(nt.NRbks_Kpt_eta_phi[ib][0]);
+      nt.NRbks_Keta.emplace_back(nt.NRbks_Kpt_eta_phi[ib][1]);
+      nt.NRbks_Kphi.emplace_back(nt.NRbks_Kpt_eta_phi[ib][2]);
+      nt.NRbks_Pipt.emplace_back(nt.NRbks_Pipt_eta_phi[ib][0]);
+      nt.NRbks_Pieta.emplace_back(nt.NRbks_Pipt_eta_phi[ib][1]);
+      nt.NRbks_Piphi.emplace_back(nt.NRbks_Pipt_eta_phi[ib][2]);
+      nt.NRbks_l1pt.emplace_back(nt.NRbks_l1pt_eta_phi[ib][0]);
+      nt.NRbks_l1eta.emplace_back(nt.NRbks_l1pt_eta_phi[ib][1]);
+      nt.NRbks_l1phi.emplace_back(nt.NRbks_l1pt_eta_phi[ib][2]);
+      nt.NRbks_l2pt.emplace_back(nt.NRbks_l2pt_eta_phi[ib][0]);
+      nt.NRbks_l2eta.emplace_back(nt.NRbks_l2pt_eta_phi[ib][1]);
+      nt.NRbks_l2phi.emplace_back(nt.NRbks_l2pt_eta_phi[ib][2]);
+    }
+  }
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

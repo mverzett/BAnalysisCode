@@ -10,6 +10,7 @@ BKstarlldecay::~BKstarlldecay(){};
 
 void BKstarlldecay::CombineTracks(float & MPairmin,float & MPairmax){
   MPairmin_=MPairmin; MPairmax_=MPairmax; int idx=-1;
+  if (phill) pion_mass=kaon_mass;
   for(std::vector<reco::TransientTrack>::iterator trk1=KTrack.begin(); trk1!=KTrack.end(); ++trk1){
    for(std::vector<reco::TransientTrack>::iterator trk2=trk1+1; trk2!=KTrack.end(); ++trk2){
      if (trk1->charge()==trk2->charge()) continue;  
@@ -22,9 +23,10 @@ void BKstarlldecay::CombineTracks(float & MPairmin,float & MPairmax){
          indexpair.push_back(idx);
        }
      }
+     
      vK.SetPtEtaPhiM(trk2->track().pt(),trk2->track().eta(),trk2->track().phi(),0.493);
      vPi.SetPtEtaPhiM(trk1->track().pt(),trk1->track().eta(),trk1->track().phi(),0.139);
-     if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1){    
+     if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1 && !phill){    
        if (FormKstar(*trk2,*trk1)){
          KstarTracks.emplace_back(std::make_pair(*trk2,*trk1));
          indexpair.push_back(idx);
@@ -47,6 +49,7 @@ bool BKstarlldecay::FormKstar(reco::TransientTrack & trkK,reco::TransientTrack &
 
 void BKstarlldecay::Fill(NtupleContent &nt){
   vperp.SetXYZ(nt.beam_x,nt.beam_y,nt.beam_z);
+  
   for(const std::pair<unsigned int, unsigned int> &imu : used_muTracks_index){
     bool IsE(false); float m(0.105); 
     unsigned int mindex(&imu-&used_muTracks_index[0]);
@@ -68,10 +71,6 @@ void BKstarlldecay::Fill(NtupleContent &nt){
        if (RefitMuTracksOnly && !IsE) RefitTracks=true;
        vK.SetPtEtaPhiM(trkK.track().pt(),trkK.track().eta(),trkK.track().phi(),0.495);
        vPi.SetPtEtaPhiM(trkPi.track().pt(),trkPi.track().eta(),trkPi.track().phi(),0.139);
-       // if (deltaR(vmu1.Eta(),vmu1.Phi(),vK.Eta(),vK.Phi())<0.005) continue;
-       // if (deltaR(vmu2.Eta(),vmu2.Phi(),vK.Eta(),vK.Phi())<0.005) continue;
-       // if (deltaR(vmu1.Eta(),vmu1.Phi(),vPi.Eta(),vPi.Phi())<0.005) continue;
-       //  if (deltaR(vmu2.Eta(),vmu2.Phi(),vPi.Eta(),vPi.Phi())<0.005) continue;
        if ((vmu1+vmu2+vK+vPi).M()<massmin_ || (vmu1+vmu2+vK+vPi).M()>massmax_) continue;
        KinematicParticleFactoryFromTransientTrack pFactory;
        std::vector<RefCountedKinematicParticle> allParticles;
@@ -144,6 +143,33 @@ void BKstarlldecay::Fill(NtupleContent &nt){
       nt.NRbks_ksmass.push_back((vK+vPi).M());
       }
      }
+}
+
+
+void BKstarlldecay::FillPhill(NtupleContent & nt){
+  nt.NRbphi_cosTheta2D=std::move(nt.NRbks_cosTheta2D);
+  nt.NRbphi_bspot_lxy=std::move(nt.NRbks_bspot_lxy);
+  nt.NRbphi_bspot_elxy=std::move(nt.NRbks_bspot_elxy);  
+  nt.NRbphi_mass=std::move(nt.NRbks_mass); 
+  nt.NRbphi_chi_prob=std::move(nt.NRbks_chi_prob);
+  nt.NRbphi_charge=std::move(nt.NRbks_charge); 
+  nt.NRbphi_K1UNFITpt_eta_phi=std::move(nt.NRbks_KUNFITpt_eta_phi);
+  nt.NRbphi_K2UNFITpt_eta_phi=std::move(nt.NRbks_PiUNFITpt_eta_phi);
+  nt.NRbphi_pt_eta_phi=std::move(nt.NRbks_pt_eta_phi);
+  nt.NRbphi_x_y_z=std::move(nt.NRbks_x_y_z);
+  nt.NRbphi_ex_ey_ez=std::move(nt.NRbks_ex_ey_ez);
+  nt.NRbphi_ept_eeta_ephi=std::move(nt.NRbks_ept_eeta_ephi);
+  nt.NRbphi_mudecay=std::move(nt.NRbks_mudecay);
+  nt.NRbphi_lep1Id=std::move(nt.NRbks_lep1Id);
+  nt.NRbphi_lep2Id=std::move(nt.NRbks_lep2Id);
+  nt.NRbphi_mll=std::move(nt.NRbks_mll);
+  nt.NRbphi_k1_sdxy=std::move(nt.NRbks_k_sdxy);
+  nt.NRbphi_k2_sdxy=std::move(nt.NRbks_pi_sdxy);
+  nt.NRbphi_K1pt_eta_phi=std::move(nt.NRbks_Kpt_eta_phi);
+  nt.NRbphi_K2pt_eta_phi=std::move(nt.NRbks_Pipt_eta_phi);
+  nt.NRbphi_l1pt_eta_phi=std::move(nt.NRbks_l1pt_eta_phi);
+  nt.NRbphi_l2pt_eta_phi=std::move(nt.NRbks_l2pt_eta_phi);
+  nt.NRbphi_phimass=std::move(nt.NRbks_ksmass);
 }
 
 

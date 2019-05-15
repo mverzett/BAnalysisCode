@@ -2,6 +2,8 @@
 #define NTUPLECONTENT_H
 #include <vector>
 #include "TTree.h"
+#include <boost/range/combine.hpp>
+#include <boost/tuple/tuple.hpp>
 
 class NtupleContent{
 
@@ -60,7 +62,7 @@ public:
    std::vector<std::vector<float>> NRb_Kpt_eta_phi,NRb_KUNFITpt_eta_phi,
    NRb_pt_eta_phi,NRb_l1pt_eta_phi,NRb_l2pt_eta_phi,
    NRb_x_y_z,NRb_ex_ey_ez,NRb_ept_eeta_ephi;
-   std::vector<unsigned int> NRb_mudecay,NRb_lep1Id,NRb_lep2Id;
+   std::vector<unsigned int> NRb_mudecay,NRb_lep1Id,NRb_lep2Id,NRb_trkId;
    //Reconstruction B->K*ll
    std::vector<float> NRbks_k_sdxy,NRbks_pi_sdxy,NRbks_mass,NRbks_charge,
    NRbks_chi_prob,NRbks_bspot_lxy, NRbks_bspot_elxy,
@@ -71,6 +73,15 @@ public:
    NRbks_KUNFITpt_eta_phi,NRbks_PiUNFITpt_eta_phi; 
    std::vector<unsigned int> NRbks_mudecay,NRbks_lep1Id, NRbks_lep2Id;
    std::vector<int> NRbks_trkpair_index;
+   //Reconstruction B->phill
+   std::vector<float> NRbphi_k1_sdxy,NRbphi_k2_sdxy,NRbphi_mass,NRbphi_charge,
+   NRbphi_chi_prob,NRbphi_bspot_lxy, NRbphi_bspot_elxy,
+   NRbphi_cosTheta2D,NRbphi_mll,NRbphi_phimass; 
+   std::vector<std::vector<float>> NRbphi_pt_eta_phi,NRbphi_x_y_z,
+   NRbphi_ex_ey_ez,NRbphi_ept_eeta_ephi,NRbphi_l1pt_eta_phi,
+   NRbphi_l2pt_eta_phi,NRbphi_K1pt_eta_phi,NRbphi_K2pt_eta_phi,
+   NRbphi_K1UNFITpt_eta_phi,NRbphi_K2UNFITpt_eta_phi; 
+   std::vector<unsigned int> NRbphi_mudecay,NRbphi_lep1Id, NRbphi_lep2Id;
    //gen
    float ngenB,ngenLep;
   std::vector<float> genB_pt,genB_phi,genB_eta,genB_pdgId,genB_Bindex,
@@ -79,7 +90,13 @@ public:
   genB_granddaughter_eta,genB_granddaughter_phi,genB_granddaughter_pdgId,
   genB_granddaughter_Bindex,genB_granddaughter_Dindex;
   std::vector<float> genLep_pt,genLep_phi,genLep_eta,genLep_pdgId,genLep_mom; 
-
+  //flat
+  std::vector<float> NRb_pt,NRb_eta,NRb_phi,NRb_Kpt,NRb_Keta,NRb_Kphi,NRb_l1pt,
+  NRb_l1eta,NRb_l1phi,NRb_l2pt,NRb_l2eta,NRb_l2phi,
+  NRbks_pt,NRbks_eta,NRbks_phi,NRbks_Kpt,NRbks_Keta,NRbks_Kphi,NRbks_l1pt,
+  NRbks_l1eta,NRbks_l1phi,NRbks_l2pt,NRbks_l2eta,NRbks_l2phi,NRbks_Pipt,
+  NRbks_Pieta,NRbks_Piphi;
+    
 private:
    TTree * t1;
 

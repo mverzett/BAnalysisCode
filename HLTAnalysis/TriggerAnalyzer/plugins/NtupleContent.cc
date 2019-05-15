@@ -78,7 +78,7 @@ void NtupleContent::ClearVariables(){
    NRb_Kpt_eta_phi.clear(); NRb_KUNFITpt_eta_phi.clear();
    NRb_pt_eta_phi.clear(); NRb_l1pt_eta_phi.clear(); 
    NRb_l2pt_eta_phi.clear(); NRb_x_y_z.clear(); NRb_ex_ey_ez.clear(); 
-   NRb_ept_eeta_ephi.clear();
+   NRb_ept_eeta_ephi.clear(); NRb_trkId.clear();
    NRb_mudecay.clear(); NRb_lep1Id.clear(); NRb_lep2Id.clear();
    //B->K*ll
    NRbks_k_sdxy.clear(); NRbks_pi_sdxy.clear(); NRbks_mass.clear();
@@ -92,6 +92,16 @@ void NtupleContent::ClearVariables(){
    NRbks_KUNFITpt_eta_phi.clear(); NRbks_PiUNFITpt_eta_phi.clear(); 
    NRbks_mudecay.clear(); NRbks_lep1Id.clear(); NRbks_lep2Id.clear();
    NRbks_trkpair_index.clear();
+   //B->phill
+   NRbphi_k1_sdxy.clear(); NRbphi_k2_sdxy.clear(); NRbphi_mass.clear();
+   NRbphi_charge.clear(); NRbphi_chi_prob.clear(); NRbphi_bspot_lxy.clear(); 
+   NRbphi_bspot_elxy.clear(); NRbphi_cosTheta2D.clear(); 
+   NRbphi_mll.clear(); NRbphi_phimass.clear(); NRbphi_pt_eta_phi.clear();
+   NRbphi_x_y_z.clear(); NRbphi_ex_ey_ez.clear(); NRbphi_ept_eeta_ephi.clear(); 
+   NRbphi_l2pt_eta_phi.clear(); NRbphi_l1pt_eta_phi.clear(); 
+   NRbphi_K1pt_eta_phi.clear(); NRbphi_K2pt_eta_phi.clear(); 
+   NRbphi_K1UNFITpt_eta_phi.clear(); NRbphi_K2UNFITpt_eta_phi.clear(); 
+   NRbphi_mudecay.clear(); NRbphi_lep1Id.clear(); NRbphi_lep2Id.clear();
    //gen
   ngenB=0,ngenLep=0;
   genB_pt.clear(); genB_phi.clear(); genB_eta.clear(); genB_pdgId.clear();
@@ -107,7 +117,7 @@ void NtupleContent::ClearVariables(){
 }
 
 void NtupleContent::SetNtupleVariables(TString Vars){
-  bool writeGen=false,writeTrk=false,writeKll=false,writeKstarll=false,writeLowPtEl=false,writeLowPtGsf=false,writePFel=false,Lite=false; 
+  bool writeGen=false,writeTrk=false,writeKll=false,writeKstarll=false,writeLowPtEl=false,writeLowPtGsf=false,writePFel=false,Lite=false,Flat=false,writePhill=false; 
   if (Vars.Contains("ALL")){
     writeGen=true,writeTrk=true,writeKll=true,writeKstarll=true,writeLowPtEl=true,writeLowPtGsf=true,writePFel=true;}
   if (Vars.Contains("GEN"))
@@ -124,15 +134,17 @@ void NtupleContent::SetNtupleVariables(TString Vars){
      writeLowPtGsf=true;
   if(Vars.Contains("PFel"))
      writePFel=true;
-  if (Vars.Contains("Lite"))
+  if (Vars.Contains("lite"))
      Lite=true;
+  if (Vars.Contains("flat"))
+     Flat=true;
 
   t1->Branch("event",&event); t1->Branch("run_number",&run_number);
   t1->Branch("ls",&ls);
   t1->Branch("beam_x",&beam_x); t1->Branch("beam_y",&beam_y);
   t1->Branch("beam_z",&beam_z); 
   
-  if (Lite){
+  if (Lite || Flat){
    t1->Branch("vertex_x",&vertex_x); t1->Branch("vertex_y",&vertex_y);
    t1->Branch("vertex_z",&vertex_z);
    t1->Branch("HLT_path1",&trigger1); t1->Branch("HLT_path2",&trigger2);
@@ -151,17 +163,51 @@ void NtupleContent::SetNtupleVariables(TString Vars){
    t1->Branch("el_phi",&el_phi); t1->Branch("el_charge",&el_charge);
    t1->Branch("el_mva_unbiased",&el_mva_unbiased);
    t1->Branch("el_islowpt",&el_islowpt);
-    t1->Branch("NRb_pt_eta_phi",&NRb_pt_eta_phi); t1->Branch("NRb_mass",&NRb_mass);
-   t1->Branch("NRb_chi_prob",&NRb_chi_prob); t1->Branch("NRb_mudecay",&NRb_mudecay);
-   t1->Branch("NRb_Kpt_eta_phi_charge",&NRb_Kpt_eta_phi);
-   t1->Branch("NRb_KUNFITpt_eta_phi",&NRb_KUNFITpt_eta_phi);
-   t1->Branch("NRb_charge",&NRb_charge);
-   t1->Branch("NRb_l1pt_eta_phi_charge",&NRb_l1pt_eta_phi);
-   t1->Branch("NRb_l2pt_eta_phi_charge",&NRb_l2pt_eta_phi);
-   t1->Branch("NRb_lep1Id",&NRb_lep1Id); t1->Branch("NRb_lep2Id",&NRb_lep2Id);     t1->Branch("NRb_trk_chi_norm",&NRb_trk_chi_norm);
-   t1->Branch("NRb_bspot_lxy",&NRb_bspot_lxy);
-   t1->Branch("NRb_bspot_elxy",&NRb_bspot_elxy);
-   t1->Branch("NRb_cosTheta2D",&NRb_cosTheta2D);
+   if (writeKll){
+     if (Flat){
+       t1->Branch("NRb_pt",&NRb_pt); t1->Branch("NRb_eta",&NRb_eta);
+       t1->Branch("NRb_phi",&NRb_phi); t1->Branch("NRb_Kpt",&NRb_Kpt);
+       t1->Branch("NRb_Keta",&NRb_Keta); t1->Branch("NRb_Kphi",&NRb_Kphi);
+       t1->Branch("NRb_l1pt",&NRb_l1pt); t1->Branch("NRb_eta",&NRb_l1eta);
+       t1->Branch("NRb_l1phi",&NRb_l1phi); t1->Branch("NRb_l2pt",&NRb_l2pt); 
+       t1->Branch("NRb_l2eta",&NRb_l2eta);  t1->Branch("NRb_l2phi",&NRb_l2phi);
+     } else {
+       t1->Branch("NRb_pt_eta_phi",&NRb_pt_eta_phi); 
+       t1->Branch("NRb_Kpt_eta_phi_charge",&NRb_Kpt_eta_phi);
+       t1->Branch("NRb_l1pt_eta_phi_charge",&NRb_l1pt_eta_phi);
+       t1->Branch("NRb_l2pt_eta_phi_charge",&NRb_l2pt_eta_phi);
+     }
+
+    t1->Branch("NRb_mass",&NRb_mass);
+    t1->Branch("NRb_chi_prob",&NRb_chi_prob); t1->Branch("NRb_mudecay",&NRb_mudecay);
+     t1->Branch("NRb_charge",&NRb_charge);
+     t1->Branch("NRb_lep1Id",&NRb_lep1Id); t1->Branch("NRb_lep2Id",&NRb_lep2Id);
+     t1->Branch("NRb_bspot_lxy",&NRb_bspot_lxy); t1->Branch("NRb_bspot_elxy",&NRb_bspot_elxy);
+     t1->Branch("NRb_cosTheta2D",&NRb_cosTheta2D); t1->Branch("NRb_mll",&NRb_mll);}
+   if (writeKstarll){
+    if (Flat){
+     t1->Branch("NRbks_pt",&NRbks_pt); t1->Branch("NRbks_eta",&NRbks_eta);
+     t1->Branch("NRbks_phi",&NRbks_phi); t1->Branch("NRbks_Kpt",&NRbks_Kpt);
+     t1->Branch("NRbks_Keta",&NRbks_Keta); t1->Branch("NRbks_Kphi",&NRbks_Kphi);
+     t1->Branch("NRbks_l1pt",&NRbks_l1pt); t1->Branch("NRbks_eta",&NRbks_l1eta);
+     t1->Branch("NRbks_l1phi",&NRbks_l1phi); t1->Branch("NRbks_l2pt",&NRbks_l2pt);
+     t1->Branch("NRbks_l2eta",&NRbks_l2eta); t1->Branch("NRbks_l2phi",&NRbks_l2phi);
+     t1->Branch("NRbks_Pipt",&NRbks_Pipt);
+     t1->Branch("NRbks_Pieta",&NRbks_Pieta); t1->Branch("NRbks_Piphi",&NRbks_Piphi);
+    } else {
+       t1->Branch("NRbks_pt_eta_phi",&NRbks_pt_eta_phi); 
+       t1->Branch("NRbks_Kpt_eta_phi_charge",&NRbks_Kpt_eta_phi);
+       t1->Branch("NRbks_l1pt_eta_phi_charge",&NRbks_l1pt_eta_phi);
+       t1->Branch("NRbks_l2pt_eta_phi_charge",&NRbks_l2pt_eta_phi);
+       t1->Branch("NRbks_Pipt_eta_phi",&NRbks_Pipt_eta_phi);
+     }
+    t1->Branch("NRbks_mass",&NRbks_mass); t1->Branch("NRbks_charge",&NRbks_charge);
+    t1->Branch("NRbks_chi_prob",&NRbks_chi_prob); t1->Branch("NRbks_bspot_lxy",&NRbks_bspot_lxy);
+    t1->Branch("NRbks_bspot_elxy",&NRbks_bspot_elxy); t1->Branch("NRbks_cosTheta2D",&NRbks_cosTheta2D);
+    t1->Branch("NRbks_mll",&NRbks_mll); t1->Branch("NRbks_ksmass",&NRbks_ksmass);
+    t1->Branch("NRbks_trkpair_index",&NRbks_trkpair_index);
+   }
+   return;
   }
 
 
@@ -310,6 +356,7 @@ void NtupleContent::SetNtupleVariables(TString Vars){
    t1->Branch("NRb_mll",&NRb_mll); t1->Branch("NRb_ll_prob",&NRb_ll_prob);
    t1->Branch("NRb_trk_sdxy",&NRb_trk_sdxy); t1->Branch("NRb_vtx_index",&NRb_vtx_index);
    t1->Branch("NRb_trk_chi_norm",&NRb_trk_chi_norm);
+   if (writeTrk) t1->Branch("NRb_trkId",&NRb_trkId);
    t1->Branch("NRb_bspot_lxy",&NRb_bspot_lxy);
    t1->Branch("NRb_bspot_elxy",&NRb_bspot_elxy);
    t1->Branch("NRb_llsvbsv",&NRb_llsvbsv);
@@ -341,6 +388,29 @@ if (writeKstarll){
   t1->Branch("NRbks_PiUNFITpt_eta_phi",&NRbks_PiUNFITpt_eta_phi);
   t1->Branch("NRbks_trkpair_index",&NRbks_trkpair_index);
   t1->Branch("NRbks_k_sdxy",&NRbks_k_sdxy); t1->Branch("NRbks_pi_sdxy",&NRbks_pi_sdxy);
+}
+//B->phill
+if (writePhill){
+  
+  t1->Branch("NRbphi_mass",&NRbphi_mass); t1->Branch("NRbphi_charge",&NRbphi_charge);
+  t1->Branch("NRbphi_chi_prob",&NRbphi_chi_prob);
+  t1->Branch("NRbphi_bspot_lxy",&NRbphi_bspot_lxy);
+  t1->Branch("NRbphi_bspot_elxy",&NRbphi_bspot_elxy);
+  t1->Branch("NRbphi_cosTheta2D",&NRbphi_cosTheta2D);
+  t1->Branch("NRbphi_pt_eta_phi",&NRbphi_pt_eta_phi);
+  t1->Branch("NRbphi_x_y_z",&NRbphi_x_y_z);
+  t1->Branch("NRbphi_ept_eeta_ephi",&NRbphi_ept_eeta_ephi);
+  t1->Branch("NRbphi_ex_ey_ez",&NRbphi_ex_ey_ez);
+  t1->Branch("NRbphi_mudecay",&NRbphi_mudecay);
+  t1->Branch("NRbphi_lep1Id",&NRbphi_lep1Id); t1->Branch("NRbphi_lep2Id",&NRbphi_lep2Id);
+  t1->Branch("NRbphi_K1pt_eta_phi",&NRbphi_K1pt_eta_phi);
+  t1->Branch("NRbphi_K2pt_eta_phi",&NRbphi_K2pt_eta_phi);
+  t1->Branch("NRbphi_l1pt_eta_phi",&NRbphi_l1pt_eta_phi);
+  t1->Branch("NRbphi_l2pt_eta_phi",&NRbphi_l2pt_eta_phi);
+  t1->Branch("NRbphi_mll",&NRbphi_mll); t1->Branch("NRbphi_phimass",&NRbphi_phimass);
+  t1->Branch("NRbphi_K1UNFITpt_eta_phi",&NRbphi_K1UNFITpt_eta_phi);
+  t1->Branch("NRbphi_K2UNFITpt_eta_phi",&NRbphi_K2UNFITpt_eta_phi);
+  t1->Branch("NRbphi_k1_sdxy",&NRbphi_k1_sdxy); t1->Branch("NRbphi_k2_sdxy",&NRbphi_k2_sdxy);
 }
 
  

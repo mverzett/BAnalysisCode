@@ -29,7 +29,8 @@ public:
   void MassCuts(float &min, float &max) { massmin_=min; massmax_=max;  }
   void CombineTracks(float & MPairmin,float & MPairmax);
   bool FormKstar(reco::TransientTrack & trkK,reco::TransientTrack & trkPi );
-
+  void Runphill(bool phill_) { phill=phill_;}
+  void FillPhill(NtupleContent & nt);
 private:
   ParticleMass part_mass=0.105; float part_sigma=0.0000001;
   ParticleMass kaon_mass=0.493; float kaon_sigma=0.000016;
@@ -45,6 +46,7 @@ private:
   KinematicParticleFactoryFromTransientTrack pFactory;
   TLorentzVector vK,vPi; std::vector<std::pair<reco::TransientTrack,reco::TransientTrack>> KstarTracks;
   float  MPairmin_; float MPairmax_; std::vector<int> indexpair;
+  bool phill;
 };
 
 #endif 
