@@ -32,6 +32,36 @@ class HLTL1tree{
   }
   std::vector<float> GetHighestPtHLTObject();
   bool HLTPathFire() {return evtFire;}
+  void FillL1(NtupleContent& nt){
+	  nt.l1_seed1=(l1seeds[0]) ? 1:0;
+      nt.l1_seed2=(l1seeds[1]) ? 1:0;
+      nt.l1_seed3=(l1seeds[2]) ? 1:0;
+      nt.l1_seed4=(l1seeds[3]) ? 1:0;
+      nt.l1_seed5=(l1seeds[4]) ? 1:0;
+      nt.l1_seed6=(l1seeds[5]) ? 1:0;
+      }
+  void FillHLT(NtupleContent& nt){
+	  nt.trigger1=(hltpaths[0]) ? 1:0;
+      nt.trigger2=(hltpaths[1]) ? 1:0;
+      nt.trigger3=(hltpaths[2]) ? 1:0;
+      nt.trigger4=(hltpaths[3]) ? 1:0;
+      nt.trigger5=(hltpaths[4]) ? 1:0;
+      nt.trigger6=(hltpaths[5]) ? 1:0;
+      nt.trigger7=(hltpaths[6]) ? 1:0;
+      nt.trigger8=(hltpaths[7]) ? 1:0;
+      }
+   void FillObj(NtupleContent & nt){
+	  if (hltpaths[0]) nt.tr1_obj_pt_eta_phi=GetHLTObjects(0);
+      if (hltpaths[1]) nt.tr2_obj_pt_eta_phi=GetHLTObjects(1);
+      if (hltpaths[2]) nt.tr3_obj_pt_eta_phi=GetHLTObjects(2);
+      if (hltpaths[3]) nt.tr4_obj_pt_eta_phi=GetHLTObjects(3);
+      if (hltpaths[4]) nt.tr5_obj_pt_eta_phi=GetHLTObjects(4);
+      if (hltpaths[5]) nt.tr6_obj_pt_eta_phi=GetHLTObjects(5);
+      if (hltpaths[6]) nt.tr7_obj_pt_eta_phi=GetHLTObjects(6);
+      if (hltpaths[7]) nt.tr8_obj_pt_eta_phi=GetHLTObjects(7);
+	   }
+   
+
  private:
   edm::Handle<GlobalAlgBlkBxCollection> l1result;
   edm::Handle<l1t::MuonBxCollection> l1Muons;

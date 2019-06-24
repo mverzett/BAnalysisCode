@@ -2,36 +2,29 @@ import FWCore.ParameterSet.Config as cms
 #quick config
 
 
-IsData=False
-Run="D"
-Nentries=10000;  output="output_hybrid_test.root"; mlog=1000; 
-saveTrk=True; NtupleClasses="auto"; #options: all,auto,class,lite or flat
-TrgMuCone=0.03
-UseLowpTe=True; LowPtElCollection=False; CombinePFLowPtEl=False;
-LowPtGsfTrkCollection=False; PFelCollection=True;
-elcuts=dict(El1Pt=0.5,El2Pt=0.5,Dz=1000.7,El1WP=-10.2,El2WP=-10.2,PFLowPtCone=0.03)
-TrkPtCut=0.5
-RecoBtoKLepLep=True; RecoBtoKstarLepLep=False; SkipEventWithNoRecoB=False
+IsData=True
+Run="A"
+Nentries=100;  output="output_flat.root"; mlog=10000; 
+saveTrk=False; NtupleClasses="flat"; #options: all,auto,class,lite or flat
+TrgMuCone=0.1
+UseLowpTe=False; LowPtElCollection=False; CombinePFLowPtEl=True;
+LowPtGsfTrkCollection=False; PFelCollection=False;
+elcuts=dict(El1Pt=1.5,El2Pt=0.5,Dz=0.7,DzeeMax=1.0,El1WP=3,El2WP=-4,PFLowPtCone=0.03)
+EtaCut=2.5; TrkPtCut=0.8; MuPtCut=0.5;
+RetrieveMuFromTrk=dict(algo=False,maxPtTrk=4)
+RecoBtoKLepLep=True; RecoBtoKstarLepLep=False; SkipEventWithNoRecoB=True
 MuonsOnly=False; ElectronsOnly=True; addlostTrk=True
-Bcuts=dict(Prob=-0.01,Cos=-10.9,MinM=-4.5,MaxM=60,MinMll=0,MaxMll=5);
-GenRecoMatch=True
+RefitTracksForB="mu" #options: mu (only mu), both (mu + e) and none(PF used).Refitted tracks used to calculate B properties.
+Bcuts=dict(Prob=0.00000001,Cos=0,MinM=4.5,MaxM=6,MinMll=0,MaxMll=5,PtMin=3.0);
+GenRecoMatch=False
 Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
-#'/store/data/Run2018B/ParkingBPH5/MINIAOD/PromptReco-v1/000/317/650/00000/321646CB-F76E-E811-91FF-FA163EE936A8.root'
-#'/store/mc/RunIIAutumn18MiniAOD/BdToKstar_ToMuMu_MuFilter_SoftQCDnonD_TuneCP5_13Tev-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v2/80000/F43AD69B-A44E-534B-A195-1C974990B8C6.root'
-#'/store/data/Run2018D/ParkingBPH4/MINIAOD/20Mar2019-v1/110000/A336D5D0-93A3-D944-A82A-8FA4165A5B2B.root'
-#'/store/data/Run2018D/ParkingBPH1/MINIAOD/20Mar2019-v1/120000/35C993A3-575A-184B-AA17-035629397EDE.root'
-#crash #189 evt
-#crash #3 evt
-#'/store/data/Run2018D/ParkingBPH1/MINIAOD/20Mar2019-v1/120001/44BD5BCD-3EE9-9741-89B6-CB81EE485DA7.root'
-'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_135.root'
-#'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/BtoKppmunu_production/CMSSW_10_2_14/src/BPH-RunIIAutumn18MiniAOD-00001.root'
-#'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/HLT/efficiency/Analizer/LostTrackFix/CMSSW_10_5_0/src/step2.root'
-#'file:/afs/cern.ch/work/g/gkaratha/private/SUSYCMG/HLT/efficiency/Analizer/LostTrackFix/CMSSW_10_5_0/src/step2.root'
-#'/store/mc/RunIIAutumn18MiniAOD/BuToK_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v3/90000/FE81DFA9-EA47-764C-842D-1F7A31327500.root'
+# '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
+#'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
+'/store/data/Run2018D/ParkingBPH4/MINIAOD/20Mar2019-v1/110000/A336D5D0-93A3-D944-A82A-8FA4165A5B2B.root'
 ]
-############ for debug
- #eventsToProcess=cms.untracked.VEventRange('324293:564:1047993750-324293:564:MAX'),
+############ for debug evt 1242 run 1 ls 13
+ #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
  #  eventsToProcess=cms.untracked.VEventRange('317696:399:MIN-317696:399:MAX')
 
 ##########
@@ -120,6 +113,8 @@ process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
            File
    ),
+#   eventsToProcess=cms.untracked.VEventRange('1:12674:1267332-1:12674:1267332'),
+#eventsToProcess=cms.untracked.VEventRange('1:68462:MIN-1:68462:MAX'),
    secondaryFileNames=cms.untracked.vstring(
 ),
  
@@ -127,7 +122,8 @@ process.source = cms.Source("PoolSource",
                   'keep *',
                   'drop *_ctppsPixelClusters_*_*',
                   
-          )
+          ),
+ #  eventsToProcess=cms.untracked.VEventRange('317650:2:557156','317650:2:1023393','317650:2:710785','317650:2:769853')
 
 )
 '''process.selectedPFCandidatesHP = cms.EDFilter("PATPackedCandidateSelector",
@@ -187,24 +183,28 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
       SaveResultsOnlyIfAPathFired=cms.bool(HLTsave),
       ReconstructBMuMuK=cms.bool(RecoBtoKLepLep),
       ReconstructBMuMuKstar=cms.bool(RecoBtoKstarLepLep),
-      MuonPtCutForB=cms.double(1.5),TrackPtCutForB=cms.double(TrkPtCut),
-      EtaTrk_Cut=cms.double(2.5),
+      MuonPtCutForB=cms.double(MuPtCut),RetrieveMuFromTrk=cms.bool(RetrieveMuFromTrk["algo"]),
+      maxPtTrk=cms.double(RetrieveMuFromTrk["maxPtTrk"]),
+      TrackPtCutForB=cms.double(TrkPtCut),EtaTrk_Cut=cms.double(EtaCut),
       #electroncuts
       Electron1PtCut=cms.double(elcuts["El1Pt"]),Electron2PtCut=cms.double(elcuts["El2Pt"]),
-      ElectronDzCut=cms.double(elcuts["Dz"]), TrgConeCut=cms.double(TrgMuCone), 
+      ElectronDzCut=cms.double(elcuts["Dz"]), DzeeMaxCut=cms.double(elcuts["DzeeMax"]),
+      TrgConeCut=cms.double(TrgMuCone), 
       IsLowpTE=cms.bool(UseLowpTe), MVAEl1Cut=cms.double(elcuts["El1WP"]),
       MVAEl2Cut=cms.double(elcuts["El2WP"]),PointingConstraint=cms.bool(False),
       CosThetaCutPointCons=cms.bool(False), UseClosestVertex=cms.bool(False),
       SkipEventWithNoBToMuMuK=cms.bool(SkipNoKLL),UseBeamspot=cms.bool(False),
+      UsePFeForCos=cms.bool(True),
       AddeeK=cms.bool(Addel),MLLmax_Cut=cms.double(Bcuts["MaxMll"]),
       MLLmin_Cut=cms.double(Bcuts["MinMll"]),
       MBmin_Cut=cms.double(Bcuts["MinM"]),MBmax_Cut=cms.double(Bcuts["MaxM"]),
+      PtBminCut=cms.double(Bcuts["PtMin"]),
       CosThetaCut=cms.double(Bcuts["Cos"]),ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
       CombineElCol=cms.bool(CombinePFLowPtEl),CombineCone=cms.double(elcuts["PFLowPtCone"]),
       MKstarMin_Cut=cms.double(0.742),MKstarMax_Cut=cms.double(1.042),
       LepTrkExclusionCone=cms.double(0.005),AddLostTracks=cms.bool(addlostTrk),
-      RefitTracks=cms.bool(False),RefitMuTracksOnly=cms.bool(True),
-      OnlyKee=cms.bool(Onlyel),UsePFeForCos=cms.bool(True),
+      RefitTracks=cms.string(RefitTracksForB),
+      OnlyKee=cms.bool(Onlyel),
       SkipEventWithNoBToMuMuKstar=cms.bool(SkipNoKsLL),
       UseDirectlyGenBeeK=cms.bool(GenRecoMatch),DRgenCone=cms.double(Bdecaymatch["DR"]),
       BpdgIdToMatch=cms.int32(Bdecaymatch["PdgId"]),
@@ -221,8 +221,8 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
 process.load( "HLTrigger.HLTanalyzers.hlTrigReport_cfi" )
 process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True),
-    #SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
+
 process.hlTrigReport.HLTriggerResults   = cms.InputTag("TriggerResults", "", "HLT")
 
 
@@ -238,15 +238,10 @@ process.fevt = cms.OutputModule("PoolOutputModule",
 #process.p = cms.Path(process.egmGsfElectronIDSequence)#* process.demo)
 process.p = cms.Path(
    process.egmGsfElectronIDSequence   
-  # +process.unpackedTracksAndVertices
-#+process.SecondaryVerticesFromHighPurityTracks
- #  +process.selectedPFCandidatesHP
    +process.demo
    #+process.hlTrigReport
   
    )
    
 #process.endjob=cms.EndPath(process.fevt)
-#samples
-#'/store/mc/RunIIAutumn18MiniAOD/BuToK_ToMuMu_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_102X_upgrade2018_realistic_v15-v2/80000/FBEB6F2C-3302-9C4E-9E9D-F253120EC027.root'
 

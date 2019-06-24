@@ -13,6 +13,7 @@
 #include "NtupleContent.h"
 #include "TripleTrackKinFit.h"
 #include <vector>
+#include <string>
 #include "DataFormats/Math/interface/deltaR.h"
 #include "CommonTools/Statistics/interface/ChiSquaredProbability.h"
 
@@ -21,13 +22,13 @@
 class BKstarlldecay{
    
 public:
-  BKstarlldecay(unsigned int &nmupairs_, std::vector<std::pair<unsigned int,unsigned int>>& used_lep_tracks, std::vector<reco::TransientTrack> & vmuTrack1,std::vector<reco::TransientTrack> & vmuTrack2, std::vector<reco::TransientTrack> & vKTrack, float & beam_xz_,float & beam_yz_ ,bool & RefitMuTracksOnly_);
+  BKstarlldecay(unsigned int &nmupairs_, std::vector<std::pair<unsigned int,unsigned int>>& used_lep_tracks, std::vector<reco::TransientTrack> & vmuTrack1,std::vector<reco::TransientTrack> & vmuTrack2, std::vector<reco::TransientTrack> & vKTrack, float beam_xz_,float beam_yz_ ,std::string RefitTracks_);
   virtual ~BKstarlldecay();
   void Fill(NtupleContent & nt);
   void ProbCut(float & Pchi2BMuMuK) { probcut_=Pchi2BMuMuK; }
   void CosCut(float & CosThetaCut) { coscut_=CosThetaCut; }
   void MassCuts(float &min, float &max) { massmin_=min; massmax_=max;  }
-  void CombineTracks(float & MPairmin,float & MPairmax);
+  void CombineTracks(float MPairmin,float MPairmax);
   bool FormKstar(reco::TransientTrack & trkK,reco::TransientTrack & trkPi );
   void Runphill(bool phill_) { phill=phill_;}
   void FillPhill(NtupleContent & nt);
@@ -39,8 +40,8 @@ private:
   unsigned int &nmupairs;
   std::vector<std::pair<unsigned int,unsigned int>>& used_muTracks_index;
   std::vector<reco::TransientTrack> & muTrack1; std::vector<reco::TransientTrack> & muTrack2; 
-  std::vector<reco::TransientTrack> & KTrack; float & beam_xz; float & beam_yz; 
-  bool &  RefitMuTracksOnly;
+  std::vector<reco::TransientTrack> & KTrack; float beam_xz; float beam_yz; 
+  bool RefitMu,RefitEl,RefitTracks; std::string & RefitBTracks;
   std::vector<float> tempK,tempBpt,tempBx,tempBex,tempBept;
   ParticleMass pion_mass = 0.139; float pion_sigma = 0.000016;
   KinematicParticleFactoryFromTransientTrack pFactory;

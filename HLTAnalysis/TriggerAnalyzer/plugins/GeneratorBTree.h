@@ -13,6 +13,7 @@
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include <limits>
 #include <cstddef>
+#include "NtupleContent.h"
 
 class GeneratorBTree{
 
@@ -47,7 +48,20 @@ public:
    std::pair<float,float> EtaPhiK(){return EtaPhiHadron;}
    std::pair<float,float> EtaPhiL(){return EtaPhiLep;}
    std::pair<float,float> EtaPhiaL(){return EtaPhiaLep;}
-  
+   void Fill(NtupleContent & nt){
+	 nt.ngenB=BMotherPt.size(); nt.genB_pt=BMotherPt; nt.genB_phi=BMotherPhi;
+     nt.genB_eta=BMotherEta; nt.genB_pdgId=BMotherPdgId; nt.genB_Bindex=BMotherBid;
+     nt.genB_daughter_pt=BDaughterPt; nt.genB_daughter_eta=BDaughterEta;
+     nt.genB_daughter_phi=BDaughterPhi; nt.genB_daughter_pdgId=BDaughterPdgId; 
+     nt.genB_daughter_Bindex=BDaughterBid; nt.genB_daughter_Dindex=BDaughterDid; 
+     nt.genB_granddaughter_pt=BGDaughterPt; nt.genB_granddaughter_eta=BGDaughterEta;
+     nt.genB_granddaughter_phi=BGDaughterPhi; nt.genB_granddaughter_pdgId=BGDaughterPdgId;
+     nt.genB_granddaughter_Bindex=BGDaughterBid;
+     nt.genB_granddaughter_Dindex=BGDaughterDid;
+     nt.ngenLep=genLepPt.size(); nt.genLep_pt=genLepPt; 
+     nt.genLep_phi=genLepPhi; nt.genLep_eta=genLepEta; 
+     nt.genLep_pdgId=genLepPdgId; nt.genLep_mom=genLepMother;
+	   }   
 
 private:
   edm::Handle<edm::View<reco::GenParticle> > pruned;

@@ -13,6 +13,7 @@
 #include "NtupleContent.h"
 #include "TripleTrackKinFit.h"
 #include <vector>
+#include <string>
 #include "DataFormats/Math/interface/deltaR.h"
 #include "CommonTools/Statistics/interface/ChiSquaredProbability.h"
 
@@ -21,13 +22,17 @@
 class BKlldecay{
    
 public:
-  BKlldecay(unsigned int &nmupairs_, std::vector<std::pair<unsigned int,unsigned int>>& used_lep_tracks, std::vector<reco::TransientTrack> & vmuTrack1,std::vector<reco::TransientTrack> & vmuTrack2, std::vector<reco::TransientTrack> & vKTrack, float & beam_xz_,float & beam_yz_ ,bool RefitMuTracksOnly_);
+  BKlldecay(unsigned int &nmupairs_, std::vector<std::pair<unsigned int,unsigned int>>& used_lep_tracks, std::vector<reco::TransientTrack> & vmuTrack1,std::vector<reco::TransientTrack> & vmuTrack2, std::vector<reco::TransientTrack> & vKTrack, float beam_xz_,float beam_yz_ ,std::string RefitTracks_);
   virtual ~BKlldecay();
   void Fill(NtupleContent & nt);
-  void ProbCut(float & Pchi2BMuMuK) { probcut_=Pchi2BMuMuK; }
-  void CosCut(float & CosThetaCut) { coscut_=CosThetaCut; }
-  void MassCuts(float &min, float &max) { massmin_=min; massmax_=max;  }
-
+  void ProbCut(float Pchi2BMuMuK) { probcut_=Pchi2BMuMuK; }
+  void CosCut(float CosThetaCut) { coscut_=CosThetaCut; }
+  void PtBCut(float PtBminCut) { ptbmin_=PtBminCut; }
+  void MassCuts(float min, float max) { massmin_=min; massmax_=max;  }
+  void SetNumTrkForMu(unsigned int nmupfpairs_) { 
+	  if (nmupfpairs_>nmupairs){
+	    Mu2IsTrk=nmupairs+1; nmupairs=nmupfpairs_;}
+	  }
 private:
   ParticleMass part_mass=0.1056583; float part_sigma=0.0000001;
   ParticleMass kaon_mass=0.493677; float kaon_sigma=0.000016;
@@ -36,11 +41,10 @@ private:
   unsigned int &nmupairs;
   std::vector<std::pair<unsigned int,unsigned int>>& used_muTracks_index;
   std::vector<reco::TransientTrack> & muTrack1; std::vector<reco::TransientTrack> & muTrack2; 
-  std::vector<reco::TransientTrack> & KTrack; float & beam_xz; float & beam_yz; 
-  bool &  RefitMuTracksOnly;
+  std::vector<reco::TransientTrack> & KTrack; float beam_xz; float beam_yz; 
+  bool RefitMu,RefitEl,RefitTracks; std::string & RefitBTracks; float ptbmin_;
   std::vector<float> tempK,tempBpt,tempBx,tempBex,tempBept;
-  //reco::TrackBase::Point vertex_point; 
-  //  math::XYZPoint vertex_point;
+  unsigned int Mu2IsTrk=0;
 };
 
 #endif 

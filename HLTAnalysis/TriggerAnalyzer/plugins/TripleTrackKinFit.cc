@@ -1,31 +1,24 @@
 #include "TripleTrackKinFit.h"
-#include "RecoVertex/KinematicFitPrimitives/interface/ParticleMass.h"
-#include "RecoVertex/KinematicFitPrimitives/interface/MultiTrackKinematicConstraint.h"
-#include "RecoVertex/KinematicFit/interface/CombinedKinematicConstraint.h"
-#include <RecoVertex/KinematicFitPrimitives/interface/KinematicParticleFactoryFromTransientTrack.h>
-#include "RecoVertex/KinematicFit/interface/KinematicConstrainedVertexFitter.h"
-#include "RecoVertex/KinematicFit/interface/TwoTrackMassKinematicConstraint.h"
-#include "RecoVertex/KinematicFit/interface/KinematicParticleVertexFitter.h"
-#include "RecoVertex/KinematicFit/interface/KinematicParticleFitter.h"
-#include "RecoVertex/KinematicFit/interface/MassKinematicConstraint.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
-#include "TrackingTools/Records/interface/TransientTrackRecord.h"
-#include "DataFormats/MuonReco/interface/MuonSelectors.h"
-#include "RecoVertex/KinematicFit/interface/MultiTrackPointingKinematicConstraint.h"
-#include "TLorentzVector.h"
-#include "TVector3.h"
 
 
-//TripleTrackKinFit::TripleTrackKinFit():
-//  m_success(false) {}
-
+TripleTrackKinFit::TripleTrackKinFit() {};
 
 TripleTrackKinFit::TripleTrackKinFit(std::vector<RefCountedKinematicParticle>& allParticles){ 
- // std::cout<<"part "<<allParticles.size()<<std::endl;
   KinematicConstrainedVertexFitter kcvFitter;    
   bsTree = kcvFitter.fit(allParticles);
   m_npart=allParticles.size();
-
+  if (bsTree->isEmpty()) {m_success=false; return;}
+  if(!bsTree->isValid()) {m_success=false; return;}
+  if (!bsTree->isConsistent()) {m_success=false; return;}
+  bsTree->movePointerToTheTop(); b_s=bsTree->currentParticle();
+  b_dec_vertex=bsTree->currentDecayVertex();
+  if (!b_s->currentState().isValid()){ m_success=false; return;}
+  bs_state=b_s->currentState();
+  if(!b_dec_vertex->vertexIsValid()){m_success=false; return;}
+  bs_children = bsTree->finalStateParticles();
+  if(bs_children.size()!=m_npart){ m_success=false; return;}
+  bs_track=b_s->refittedTransientTrack();
+  m_success=true;
 }
 
 TripleTrackKinFit::TripleTrackKinFit(std::vector<RefCountedKinematicParticle>& allParticles,ParticleMass Kstar_m){
@@ -35,22 +28,28 @@ TripleTrackKinFit::TripleTrackKinFit(std::vector<RefCountedKinematicParticle>& a
     m_npart=allParticles.size();
    }
 
-
-bool TripleTrackKinFit::success(){
-  if (bsTree->isEmpty()) { m_success=false; return false;}
-  if(!bsTree->isValid()) { m_success=false; return false;}
-  if (!bsTree->isConsistent()) {m_success=false;  return false;}
+void TripleTrackKinFit::SetKinFitTracks(std::vector<RefCountedKinematicParticle>& allParticles){
+  KinFit=true;
+  KinematicConstrainedVertexFitter kcvFitter;    
+  bsTree = kcvFitter.fit(allParticles);
+  m_npart=allParticles.size();
+  if (bsTree->isEmpty()) {m_success=false; return;}
+  if(!bsTree->isValid()) {m_success=false; return;}
+  if (!bsTree->isConsistent()) {m_success=false; return;}
   bsTree->movePointerToTheTop(); b_s=bsTree->currentParticle();
   b_dec_vertex=bsTree->currentDecayVertex();
-  if (!b_s->currentState().isValid()){ m_success=false; return false;}
+  if (!b_s->currentState().isValid()){ m_success=false; return;}
   bs_state=b_s->currentState();
-  //bs_state=b_s->initialState();
-  if(!b_dec_vertex->vertexIsValid()){m_success=false; return false;}
+  if(!b_dec_vertex->vertexIsValid()){m_success=false; return;}
   bs_children = bsTree->finalStateParticles();
-  if(bs_children.size()!=m_npart){ m_success=false; return false;}
+  if(bs_children.size()!=m_npart){ m_success=false; return;}
   bs_track=b_s->refittedTransientTrack();
-  m_success=true; return true;  
+  m_success=true;
 }
+
+/*void TripleTrackKinFit::SetKalmanFitTracks(std::vector<reco::TransientTrack> & ttks,bool refit=true){
+}*/
+
 
 GlobalVector TripleTrackKinFit::Daughter_Momentum(unsigned int idaughter,bool refit){
   KinematicState child_state;

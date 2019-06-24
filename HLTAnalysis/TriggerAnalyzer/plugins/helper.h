@@ -1,0 +1,2 @@
+bool cut(){
+   return true;}

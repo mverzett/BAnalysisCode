@@ -134,9 +134,9 @@ void NtupleContent::SetNtupleVariables(TString Vars){
      writeLowPtGsf=true;
   if(Vars.Contains("PFel"))
      writePFel=true;
-  if (Vars.Contains("lite"))
+  if (Vars.Contains("Lite"))
      Lite=true;
-  if (Vars.Contains("flat"))
+  if (Vars.Contains("Flat"))
      Flat=true;
 
   t1->Branch("event",&event); t1->Branch("run_number",&run_number);
