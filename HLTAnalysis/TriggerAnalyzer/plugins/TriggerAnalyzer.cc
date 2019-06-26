@@ -147,8 +147,8 @@ private:
   ///options
    bool data=true; bool saveTracks=true; bool saveHLT=true; bool saveL1=true;
    bool saveOnlyHLTFires=false; double track_pt_cut_forB=0;
-   double muon_pt_cut_forB=0; bool reconstructBMuMuK=true;
-   double max_muon_pt_cut_forB=1.0;
+   double min_muon_pt_cut_forB=0; bool reconstructBMuMuK=true;
+   double max_muon_pt_cut_forB=0;
    bool Pointing_constraint=false; bool reconstructBMuMuKstar=true;
   double Pchi2BMuMuK=-1; double MLLmax_Cut=100; double MLLmin_Cut=-1;
   bool SkipEventWithNoBToMuMuK=false; bool UseBeamspot=false; bool AddeeK=false;
@@ -228,7 +228,8 @@ packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParamete
  reconstructBMuMuK=runParameters.getParameter<bool>("ReconstructBMuMuK");
   reconstructBMuMuKstar=runParameters.getParameter<bool>("ReconstructBMuMuKstar");
 
- muon_pt_cut_forB=runParameters.getParameter<double>("MuonPtCutForB");
+ min_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMinPtCut");
+ max_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMaxPtCut");
  track_pt_cut_forB=runParameters.getParameter<double>("TrackPtCutForB"); 
  Pchi2BMuMuK=runParameters.getParameter<double>("ProbBMuMuKcut");
  SkipEventWithNoBToMuMuK=runParameters.getParameter<bool>("SkipEventWithNoBToMuMuK");
@@ -679,10 +680,10 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
  if(!OnlyKee){
   for (int imu=0; imu<nt.nmuons; ++imu){
     if (!nt.muon_soft[imu]) continue;
-    if(nt.muon_pt[imu]< muon_pt_cut_forB) continue;
+    if(nt.muon_pt[imu]< min_muon_pt_cut_forB) continue;
     for (int imu2=imu+1; imu2<nt.nmuons; ++imu2){
      if (!nt.muon_soft[imu2]) continue; 
-     if(nt.muon_pt[imu2]< muon_pt_cut_forB) continue;
+     if(nt.muon_pt[imu2]< min_muon_pt_cut_forB) continue;
      if (nt.muon_charge[imu]==nt.muon_charge[imu2]) continue;
      if (nt.muon_pt[imu]< max_muon_pt_cut_forB && nt.muon_pt[imu2]< max_muon_pt_cut_forB)
          continue;
@@ -735,7 +736,7 @@ if (RetrieveMuFromTrk){
    nmupfpairs=nmupairs;
    for (const pat::Muon & mu : *muons){
      if (fabs(TrgmuDz-mu.vz())>ElectronDzCut) continue;
-     if (mu.pt()<muon_pt_cut_forB) continue;
+     if (mu.pt()<min_muon_pt_cut_forB) continue;
      if (fabs(mu.eta())>2.5) continue;
      if (!mu.isSoftMuon(firstGoodVertex)) continue;
      for(const pat::PackedCandidate &trk: tracks){
@@ -743,7 +744,7 @@ if (RetrieveMuFromTrk){
        if(trk.charge()==0) continue;
        if(fabs(trk.pdgId())!=211) continue;
        if(!trk.hasTrackDetails())continue;
-       if (trk.pt()< muon_pt_cut_forB) continue;
+       if (trk.pt()< min_muon_pt_cut_forB) continue;
        if (fabs(trk.eta())>EtaTrk_Cut) continue;
        if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
        if(trk.pt()>maxPtTrk) continue;
@@ -826,7 +827,7 @@ if((used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && (reconstructBM
    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK) return;
    else if (reconstructBMuMuK && SkipEventWithNoBToMuMuK && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
 }  
-
+if (NtupleOutputClasses=="flat") nt.Flatting();
   t1->Fill();
 }
 
@@ -864,6 +865,7 @@ TriggerAnalyzer<T1>::endJob()
   if (NtupleOutputClasses=="flat"){
     for (unsigned int ib=0; ib<nt.NRb_pt_eta_phi.size(); ib++){
       nt.NRb_pt.emplace_back(nt.NRb_pt_eta_phi[ib][0]);
+      cout<<nt.NRb_pt_eta_phi[ib][0]<<endl;
       nt.NRb_eta.emplace_back(nt.NRb_pt_eta_phi[ib][1]);
       nt.NRb_phi.emplace_back(nt.NRb_pt_eta_phi[ib][2]);
       nt.NRb_Kpt.emplace_back(nt.NRb_Kpt_eta_phi[ib][0]);

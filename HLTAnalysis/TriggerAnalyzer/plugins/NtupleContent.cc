@@ -102,6 +102,13 @@ void NtupleContent::ClearVariables(){
    NRbphi_K1pt_eta_phi.clear(); NRbphi_K2pt_eta_phi.clear(); 
    NRbphi_K1UNFITpt_eta_phi.clear(); NRbphi_K2UNFITpt_eta_phi.clear(); 
    NRbphi_mudecay.clear(); NRbphi_lep1Id.clear(); NRbphi_lep2Id.clear();
+   //flat
+   NRb_pt.clear(); NRb_eta.clear(); NRb_phi.clear(); NRb_Kpt.clear();
+   NRb_Keta.clear(); NRb_Kphi.clear(); NRb_l1pt.clear(); NRb_l1eta.clear();
+   NRb_l1phi.clear(); NRb_l2pt.clear(); NRb_l2eta.clear(); NRb_l2phi.clear();
+   NRbks_pt.clear(); NRbks_eta.clear(); NRbks_phi.clear(); NRbks_Kpt.clear();
+   NRbks_Keta.clear(); NRbks_Kphi.clear(); NRbks_l1pt.clear(); NRbks_l1eta.clear();
+   NRbks_l1phi.clear(); NRbks_l2pt.clear(); NRbks_l2eta.clear(); NRbks_l2phi.clear();
    //gen
   ngenB=0,ngenLep=0;
   genB_pt.clear(); genB_phi.clear(); genB_eta.clear(); genB_pdgId.clear();
@@ -168,7 +175,7 @@ void NtupleContent::SetNtupleVariables(TString Vars){
        t1->Branch("NRb_pt",&NRb_pt); t1->Branch("NRb_eta",&NRb_eta);
        t1->Branch("NRb_phi",&NRb_phi); t1->Branch("NRb_Kpt",&NRb_Kpt);
        t1->Branch("NRb_Keta",&NRb_Keta); t1->Branch("NRb_Kphi",&NRb_Kphi);
-       t1->Branch("NRb_l1pt",&NRb_l1pt); t1->Branch("NRb_eta",&NRb_l1eta);
+       t1->Branch("NRb_l1pt",&NRb_l1pt); t1->Branch("NRb_l1eta",&NRb_l1eta);
        t1->Branch("NRb_l1phi",&NRb_l1phi); t1->Branch("NRb_l2pt",&NRb_l2pt); 
        t1->Branch("NRb_l2eta",&NRb_l2eta);  t1->Branch("NRb_l2phi",&NRb_l2phi);
      } else {
@@ -412,6 +419,40 @@ if (writePhill){
   t1->Branch("NRbphi_K2UNFITpt_eta_phi",&NRbphi_K2UNFITpt_eta_phi);
   t1->Branch("NRbphi_k1_sdxy",&NRbphi_k1_sdxy); t1->Branch("NRbphi_k2_sdxy",&NRbphi_k2_sdxy);
 }
+}
 
- 
+void NtupleContent::Flatting(){
+  for (unsigned int ib=0; ib<NRb_pt_eta_phi.size(); ib++){
+      NRb_pt.emplace_back(NRb_pt_eta_phi[ib][0]);
+      NRb_eta.emplace_back(NRb_pt_eta_phi[ib][1]);
+      NRb_phi.emplace_back(NRb_pt_eta_phi[ib][2]);
+      NRb_Kpt.emplace_back(NRb_Kpt_eta_phi[ib][0]);
+      NRb_Keta.emplace_back(NRb_Kpt_eta_phi[ib][1]);
+      NRb_Kphi.emplace_back(NRb_Kpt_eta_phi[ib][2]);
+      NRb_l1pt.emplace_back(NRb_l1pt_eta_phi[ib][0]);
+      NRb_l1eta.emplace_back(NRb_l1pt_eta_phi[ib][1]);
+      NRb_l1phi.emplace_back(NRb_l1pt_eta_phi[ib][2]);
+      NRb_l2pt.emplace_back(NRb_l2pt_eta_phi[ib][0]);
+      NRb_l2eta.emplace_back(NRb_l2pt_eta_phi[ib][1]);
+      NRb_l2phi.emplace_back(NRb_l2pt_eta_phi[ib][2]);
+    }
+  for (unsigned int ib=0; ib<NRbks_pt_eta_phi.size(); ib++){
+      NRbks_pt.emplace_back(NRbks_pt_eta_phi[ib][0]);
+      NRbks_eta.emplace_back(NRbks_pt_eta_phi[ib][1]);
+      NRbks_phi.emplace_back(NRbks_pt_eta_phi[ib][2]);
+      NRbks_Kpt.emplace_back(NRbks_Kpt_eta_phi[ib][0]);
+      NRbks_Keta.emplace_back(NRbks_Kpt_eta_phi[ib][1]);
+      NRbks_Kphi.emplace_back(NRbks_Kpt_eta_phi[ib][2]);
+      NRbks_Pipt.emplace_back(NRbks_Pipt_eta_phi[ib][0]);
+      NRbks_Pieta.emplace_back(NRbks_Pipt_eta_phi[ib][1]);
+      NRbks_Piphi.emplace_back(NRbks_Pipt_eta_phi[ib][2]);
+      NRbks_l1pt.emplace_back(NRbks_l1pt_eta_phi[ib][0]);
+      NRbks_l1eta.emplace_back(NRbks_l1pt_eta_phi[ib][1]);
+      NRbks_l1phi.emplace_back(NRbks_l1pt_eta_phi[ib][2]);
+      NRbks_l2pt.emplace_back(NRbks_l2pt_eta_phi[ib][0]);
+      NRbks_l2eta.emplace_back(NRbks_l2pt_eta_phi[ib][1]);
+      NRbks_l2phi.emplace_back(NRbks_l2pt_eta_phi[ib][2]);
+    }
+
+
 }

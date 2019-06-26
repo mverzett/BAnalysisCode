@@ -14,6 +14,7 @@ public:
    void SetNtupleVariables(TString Vars);
    void DefineVariables();
    void ClearVariables();
+   void Flatting();
    //general
    int event,run_number,ls;
    float beam_x,beam_y,beam_z,beam_ex,beam_ey,beam_ez;

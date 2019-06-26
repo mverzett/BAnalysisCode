@@ -16,31 +16,33 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "RecoVertex/KinematicFit/interface/MultiTrackPointingKinematicConstraint.h"
+#include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
 #include "TLorentzVector.h"
 #include "TVector3.h"
 #include <vector>
 
 class TripleTrackKinFit{
 public: 
-//  TripleTrackKinFit();
+  TripleTrackKinFit();
   TripleTrackKinFit(std::vector<RefCountedKinematicParticle>& allParticles);
   TripleTrackKinFit(std::vector<RefCountedKinematicParticle>& allParticles,ParticleMass Kstar_m);    
   virtual ~TripleTrackKinFit();
-  bool success();
-
+  bool success() {return m_success;}
+  void SetKinFitTracks(std::vector<RefCountedKinematicParticle>& allParticles);
   GlobalVector Mother_Momentum(bool refit) {
-    if (refit)
-      return bs_state.globalMomentum();
-    else
-      return UnfittedMotherMomentum();    
-        }  
+    if (refit) return bs_state.globalMomentum();
+    else return UnfittedMotherMomentum();    
+  }  
   ParticleMass Mother_Mass(bool refit) {
     if (refit)
       return bs_state.mass();
     else
       return UnfittedMotherMass();
 }
-  float Mother_Charge() {return bs_state.particleCharge();}
+  float Mother_Charge(){
+       return bs_state.particleCharge();
+  }
+
   float chi() {return b_dec_vertex->chiSquared();}
   float dof() {return b_dec_vertex->degreesOfFreedom();}
   GlobalVector Daughter_Momentum(unsigned int idaughter,bool refit);
@@ -56,13 +58,10 @@ public:
 
 
 private:
-  bool m_success;
-  RefCountedKinematicTree bsTree;
-  RefCountedKinematicVertex b_dec_vertex;
-  KinematicState bs_state;
+  bool m_success; bool KinFit; RefCountedKinematicTree bsTree;
+  RefCountedKinematicVertex b_dec_vertex; KinematicState bs_state;
   RefCountedKinematicParticle b_s;
   std::vector< RefCountedKinematicParticle > bs_children;
-  reco::TransientTrack bs_track;
-  unsigned int m_npart;
+  reco::TransientTrack bs_track; unsigned int m_npart;
 };
 #endif
