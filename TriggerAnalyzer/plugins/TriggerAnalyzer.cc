@@ -417,6 +417,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   used_muTrack_pfTrack_index.clear();
   nmupairs=0; TrgmuDz=0; DRtrgMu=100;
   
+  // per-event quantities
   nt.event=iEvent.id().event();
   nt.run_number=iEvent.id().run();
   nt.ls=iEvent.luminosityBlock();
@@ -440,30 +441,30 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     nt.vertex_chi.push_back(vtx.chi2()); nt.vertex_ndof.push_back(vtx.ndof());
   }
 
-   vertex_point.SetCoordinates(nt.pvertex_x,nt.pvertex_y,nt.pvertex_z);
+  vertex_point.SetCoordinates(nt.pvertex_x,nt.pvertex_y,nt.pvertex_z);
    //K0 fit kalman
    //   KalmanVertexFitter theKalmanFitter(false);
    // TransientVertex K0vertex;
-  const pat::MET &theMet = met->front();
-  nt.ptmet=theMet.et(); nt.phimet=theMet.phi();
-
-  for (const pat::Jet &jet : *jets){
-    if (fabs(jet.eta())>2.5) continue;
-    nt.jet_pt.push_back(jet.pt()); nt.jet_eta.push_back(jet.eta());
-    nt.jet_phi.push_back(jet.phi());
-    nt.jet_cEmEF.push_back(jet.chargedEmEnergyFraction());
-    nt.jet_cHEF.push_back(jet.chargedHadronEnergyFraction());
-    nt.jet_cHMult.push_back(jet.chargedHadronMultiplicity());
-    nt.jet_cMuEF.push_back(jet.chargedMuEnergyFraction());
-    nt.jet_cMult.push_back(jet.chargedMultiplicity());
-    nt.jet_MuEF.push_back(jet.muonEnergyFraction());
-    nt.jet_eEF.push_back(jet.electronEnergyFraction());
-    nt.jet_nEmEF.push_back(jet.neutralEmEnergyFraction());
-    nt.jet_nHEF.push_back(jet.neutralHadronEnergyFraction());
-    nt.jet_nMult.push_back(jet.neutralMultiplicity());
-    nt.jet_pEF.push_back(jet.photonEnergyFraction());
-    nt.njets++;
-  }
+//   const pat::MET &theMet = met->front();
+//   nt.ptmet=theMet.et(); nt.phimet=theMet.phi();
+// 
+//   for (const pat::Jet &jet : *jets){
+//     if (fabs(jet.eta())>2.5) continue;
+//     nt.jet_pt.push_back(jet.pt()); nt.jet_eta.push_back(jet.eta());
+//     nt.jet_phi.push_back(jet.phi());
+//     nt.jet_cEmEF.push_back(jet.chargedEmEnergyFraction());
+//     nt.jet_cHEF.push_back(jet.chargedHadronEnergyFraction());
+//     nt.jet_cHMult.push_back(jet.chargedHadronMultiplicity());
+//     nt.jet_cMuEF.push_back(jet.chargedMuEnergyFraction());
+//     nt.jet_cMult.push_back(jet.chargedMultiplicity());
+//     nt.jet_MuEF.push_back(jet.muonEnergyFraction());
+//     nt.jet_eEF.push_back(jet.electronEnergyFraction());
+//     nt.jet_nEmEF.push_back(jet.neutralEmEnergyFraction());
+//     nt.jet_nHEF.push_back(jet.neutralHadronEnergyFraction());
+//     nt.jet_nMult.push_back(jet.neutralMultiplicity());
+//     nt.jet_pEF.push_back(jet.photonEnergyFraction());
+//     nt.njets++;
+//   }
 
    std::pair<float,float> EtaPhiE1(-10,-10),EtaPhiE2(-10,-10),EtaPhiK(-10,-10);
    if(!data){
@@ -475,6 +476,10 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
      }
    }
    if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) return;
+  
+  
+  //save trigger related informationx
+  
   //find max
   std::pair<float,float> TrgMu_EtaPhi(-100,-100);
   if (saveHLT || saveL1){
@@ -493,6 +498,8 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
    } 
   //  cout<<"here trg"<<endl;
   nevts++;
+
+  //  save offline muons (all or saveOnlyHLTFires)
   for (const pat::Muon &mu : *muons){    
     // for (unsigned int i=0, n=mu.numberOfSourceCandidatePtrs(); i<n; ++i){
      //   footprint.push_back(mu.sourceCandidatePtr(i));
@@ -502,8 +509,10 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     nt.muon_global_flag.push_back(mu.isGlobalMuon());
     nt.muon_standalone_flag.push_back(mu.isStandAloneMuon());
     nt.muon_tracker_flag.push_back(mu.isTrackerMuon());
-    nt.muon_vx.push_back(mu.vx()); nt.muon_vy.push_back(mu.vy());
-    nt.muon_vz.push_back(mu.vz()); nt.muon_edz.push_back(mu.dzError());
+    nt.muon_vx.push_back(mu.vx()); 
+    nt.muon_vy.push_back(mu.vy());
+    nt.muon_vz.push_back(mu.vz()); 
+    nt.muon_edz.push_back(mu.dzError());
     nt.muon_dz.emplace_back(mu.bestTrack()->dz(vertex_point));
     nt.muon_dxy.emplace_back(mu.bestTrack()->dxy(vertex_point));
     nt.muon_edxy.emplace_back(mu.dxyError());
@@ -518,36 +527,37 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     nt.muon_soft.push_back(mu.isSoftMuon(firstGoodVertex));
     if (DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi())<DRtrgMu){
       DRtrgMu=DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi());
-      TrgmuDz=mu.vz();  nt.muon_trgIndex=nt.nmuons;
+      TrgmuDz=mu.vz();  
+      nt.muon_trgIndex=nt.nmuons;
     }
     const reco::MuonPFIsolation&  isol=mu.pfIsolationR04();
     double mu_iso=(isol.sumChargedHadronPt+max(0.,isol.sumNeutralHadronEt+isol.sumPhotonEt-0.5*isol.sumPUPt))/mu.pt();
     nt.muon_iso.push_back(mu_iso);
     muttks.emplace_back(reco::TransientTrack(*mu.bestTrack(),&(*bFieldHandle)));
     nt.nmuons++;
-    }
-    if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) return;
+  }
+  if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) return;
     
-    //electrons  
-    trigger::size_type eindex=-1; 
-    for(const pat::Electron &el : *electrons){
-      eindex++;
-   //   for (unsigned int i=0, n=el.numberOfSourceCandidatePtrs(); i<n; ++i){
-  //      footprint.push_back(el.sourceCandidatePtr(i));
-//      }
-      float pt=0,eta=-30,phi=-30;
-      if (fabs(TrgmuDz-el.vz())>ElectronDzCut) continue;
-      if (!el.passConversionVeto()) continue;
-      if (IsLowpTE){
+  
+  //electrons  
+  trigger::size_type eindex=-1; 
+  for(const pat::Electron &el : *electrons){
+    eindex++;
+    float pt=0,eta=-30,phi=-30;
+    if (fabs(TrgmuDz-el.vz())>ElectronDzCut) continue;
+    if (!el.passConversionVeto()) continue;
+    if (IsLowpTE){
         reco::GsfTrackRef seed = el.gsfTrack();
         if ( seed.isNull() ) continue;
-        pt=el.gsfTrack()->ptMode(); eta=el.gsfTrack()->etaMode();
-        phi=el.gsfTrack()->phiMode();
+        pt  = el.gsfTrack()->ptMode(); 
+        eta = el.gsfTrack()->etaMode();
+        phi = el.gsfTrack()->phiMode();
         if (pt<Electron2PtCut) continue;
         if ( (*ele_mva_wp_unbiased)[seed]<MVAEl2Cut) continue;
         nt.el_mva_biased.push_back((*ele_mva_wp_biased)[seed]);
         nt.el_mva_unbiased.push_back((*ele_mva_wp_unbiased)[seed]);   
-      } else{
+    } 
+    else{
         pt=el.pt(); eta=el.eta(); phi=el.phi();
         if (pt<Electron2PtCut) continue;
         nt.el_mva_out.push_back(el.mva_e_pi());
@@ -559,26 +569,28 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         nt.el_tight.push_back((*ele_tight_id)[elePtr]);
         nt.el_mva_map_value.push_back((*ele_mva_id_value)[elePtr]);
         nt.el_mva_biased.push_back(-10); nt.el_mva_unbiased.push_back(-10); 
-      }
-      nt.el_pt.push_back(pt); nt.el_eta.push_back(eta);
-      nt.el_phi.push_back(phi); nt.el_charge.push_back(el.charge());
-      nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
-      nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
-      nt.el_edxy.push_back(el.dxyError()); nt.el_edz.push_back(el.dzError());
-      nt.el_vx.push_back(el.vx()); nt.el_vy.push_back(el.vy());
-      nt.el_vz.push_back(el.vz());
-      double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
-      nt.el_iso.push_back(iso); nt.el_islowpt.push_back(IsLowpTE);
-      nt.el_trkpt.push_back(el.bestTrack()->pt()); nt.el_trketa.push_back(el.bestTrack()->eta());
-      nt.el_trkphi.push_back(el.bestTrack()->phi()); 
-      ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
-      nt.nel++;
-      if (CombineElCol)  PFe_EtaPhi.emplace_back(eta,phi);
     }
+    nt.el_pt.push_back(pt); nt.el_eta.push_back(eta);
+    nt.el_phi.push_back(phi); nt.el_charge.push_back(el.charge());
+    nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
+    nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
+    nt.el_edxy.push_back(el.dxyError()); nt.el_edz.push_back(el.dzError());
+    nt.el_vx.push_back(el.vx()); nt.el_vy.push_back(el.vy());
+    nt.el_vz.push_back(el.vz());
+    double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
+    nt.el_iso.push_back(iso); nt.el_islowpt.push_back(IsLowpTE);
+    nt.el_trkpt.push_back(el.bestTrack()->pt()); nt.el_trketa.push_back(el.bestTrack()->eta());
+    nt.el_trkphi.push_back(el.bestTrack()->phi()); 
+    ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
+    nt.nel++;
+    if (CombineElCol)  PFe_EtaPhi.emplace_back(eta,phi);
+  }
+
    
-    //combine with low pT
-    if (CombineElCol){
-     for(const pat::Electron &el : *lowpte){
+  //save low pt electrons
+  if (CombineElCol){
+    for(const pat::Electron &el : *lowpte)
+    {
        float pt=0,eta=-30,phi=-30;
        if (fabs(TrgmuDz-el.vz())>ElectronDzCut) continue;
        if (!el.passConversionVeto()) continue;
@@ -608,226 +620,299 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
        nt.el_trkpt.emplace_back(el.bestTrack()->pt());
        nt.el_trketa.emplace_back(el.bestTrack()->eta());
        nt.el_trkphi.emplace_back(el.bestTrack()->phi()); 
+       // add low pt ele to same collection of pf ele for this event
        ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
+
        nt.nel++;
-      }
-    }    
-    //additional low pt el for combination
-    if (AddLowPtElAsCol && AddLowPtGsfTrkAsCol){
+    }
+  }    
+  //additional low pt el for combination
+  if (AddLowPtElAsCol && AddLowPtGsfTrkAsCol){
       LowPtElObjects lowelpt(lowPtElectronsToken_,lowPtGsfTracksToken_,eleUnBWPToken_,iEvent); 
-      lowelpt.AddElectrons(nt);  lowelpt.AddGsfTracks(nt);
-    } else if (AddLowPtElAsCol){
+      lowelpt.AddElectrons(nt);  
+      lowelpt.AddGsfTracks(nt);
+  } 
+  else if (AddLowPtElAsCol){
       LowPtElObjects lowelpt(lowPtElectronsToken_,eleUnBWPToken_,iEvent); 
       lowelpt.AddElectrons(nt);
-    } else if (AddLowPtGsfTrkAsCol){
+  } 
+  else if (AddLowPtGsfTrkAsCol){
       LowPtElObjects lowelpt(lowPtElectronsToken_,lowPtGsfTracksToken_,eleUnBWPToken_,iEvent); 
       lowelpt.AddGsfTracks(nt);
-    }
-    //add PF as collection
-   if (AddPFElAsCol){
+  }
+
+  //add PF as collection
+  if (AddPFElAsCol){
       PFelCollection PFelectrons(pfElectronsToken_,eleIdMapSoftToken_,eleIdMapMediumToken_,eleIdMapTightToken_,iEvent);
       PFelectrons.AddElectrons(nt);
    }
     /*  std::vector<std::vector<float>> mu_DCA=track_DCA(muttks);
   if (mu_DCA.size()==0) { std::vector<float> d1; d1.push_back(-99); muon_DCA.push_back(d1); }
   else muon_DCA=mu_DCA;*/
-   //save tracks
+
+  //save tracks
   for (const pat::PackedCandidate &trk : *tracks1) {
-   if (!trk.trackHighPurity()) continue;
-   tracks.push_back(trk); }
+    if (!trk.trackHighPurity()) continue;
+    tracks.push_back(trk); 
+  }
   
   if (AddLostTracks){
-   for (const pat::PackedCandidate &trk : *tracks2) {
-    tracks.push_back(trk); }}
-
- if (saveTracks){
-  for (const pat::PackedCandidate &trk : tracks){      
-   if(trk.charge()==0) continue;
-   if(fabs(trk.pdgId())!=211) continue;
-   if(!trk.hasTrackDetails())continue;
-   if (trk.pt()< track_pt_cut_forB) continue;
-   if (fabs(trk.eta())>EtaTrk_Cut) continue;
-   if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
-   if (UseDirectlyGenBeeK){
-     if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)
-       continue;
-    } 
-   bool isMu=false; bool isE=false;
-   for (const pat::Muon & mu :*muons){
-     if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
-   }
-   if (CombineElCol || !IsLowpTE){
-    for (const pat::Electron & el : *electrons) {     
-      if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
-          isE=true;
-     }}
-   if(isMu || isE ) continue;
-   nt.track_pt.push_back(trk.pt()); nt.track_eta.push_back(trk.eta());
-   nt.track_phi.push_back(trk.phi()); nt.track_charge.push_back(trk.charge());
-   if(trk.trackHighPurity()) nt.track_highPurity.push_back(1);
-   else nt.track_highPurity.push_back(0);
-   nt.track_norm_chi2.emplace_back(trk.pseudoTrack().normalizedChi2());
-   nt.track_dxy.push_back(trk.dxy(vertex_point));
-   nt.track_dz.push_back(trk.dz(vertex_point));
-   nt.track_validhits.push_back(trk.numberOfHits());
-   nt.track_losthits.push_back(trk.lostInnerHits());
-   nt.track_fromPV.push_back(trk.fromPV()); nt.ntracks++;  
-  }
- }//save tracks
-
- if(!reconstructBMuMuK && !reconstructBMuMuKstar){ t1->Fill(); return; }  
- //muon pairs 
- if(!OnlyKee){
-  for (int imu=0; imu<nt.nmuons; ++imu){
-    if (!nt.muon_soft[imu]) continue;
-    if(nt.muon_pt[imu]< min_muon_pt_cut_forB) continue;
-    for (int imu2=imu+1; imu2<nt.nmuons; ++imu2){
-     if (!nt.muon_soft[imu2]) continue; 
-     if(nt.muon_pt[imu2]< min_muon_pt_cut_forB) continue;
-     if (nt.muon_charge[imu]==nt.muon_charge[imu2]) continue;
-     if (nt.muon_pt[imu]< max_muon_pt_cut_forB && nt.muon_pt[imu2]< max_muon_pt_cut_forB)
-         continue;
-     TLorentzVector vmu1,vmu2; 
-     vmu1.SetPtEtaPhiM(nt.muon_pt[imu],nt.muon_eta[imu],nt.muon_phi[imu],0.105);
-     vmu2.SetPtEtaPhiM(nt.muon_pt[imu2],nt.muon_eta[imu2],nt.muon_phi[imu2],0.105);
-     if((vmu1+vmu2).M()<MLLmin_Cut || (vmu1+vmu2).M()>MLLmax_Cut) continue;
-     muTrack1.push_back(muttks[imu]); muTrack2.push_back(muttks[imu2]);
-     used_muTrack_index.emplace_back(imu,imu2);
-     nmupairs++;
+    for (const pat::PackedCandidate &trk : *tracks2) {
+      tracks.push_back(trk); 
     }
   }
- } 
- 
- //e pairs
- if(AddeeK || OnlyKee ){
-  for(int iel=0; iel<nt.nel; ++iel){
-    if (UseDirectlyGenBeeK && !data){
-      if (DR(EtaPhiE1.first,EtaPhiE1.second,nt.el_eta[iel],nt.el_phi[iel])>DRgenCone && DR(EtaPhiE2.first,EtaPhiE2.second,nt.el_eta[iel],nt.el_phi[iel])>DRgenCone) continue;
-    }
-    for (int iel2=iel+1; iel2<nt.nel; ++iel2){
-      if (nt.el_charge[iel]==nt.el_charge[iel2]) continue;
-      if (nt.el_pt[iel2]<Electron1PtCut && nt.el_pt[iel]<Electron1PtCut) continue;
-      if (UseDirectlyGenBeeK && !data){
-        if (DR(EtaPhiE1.first,EtaPhiE1.second,nt.el_eta[iel2],nt.el_phi[iel2])>DRgenCone && DR(EtaPhiE2.first,EtaPhiE2.second,nt.el_eta[iel2],nt.el_phi[iel2])>DRgenCone) continue;
+
+  if (saveTracks)
+  {
+    for (const pat::PackedCandidate &trk : tracks)
+    {      
+      if(trk.charge()==0) continue;
+      if(fabs(trk.pdgId())!=211) continue;
+      if(!trk.hasTrackDetails())continue;
+      if (trk.pt()< track_pt_cut_forB) continue;
+      if (fabs(trk.eta())>EtaTrk_Cut) continue;
+      if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
+      if (UseDirectlyGenBeeK){
+        if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
+      } 
+      bool isMu=false; bool isE=false;
+      for (const pat::Muon & mu :*muons){
+        if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
       }
-       if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
-         if (nt.el_mva_unbiased[iel]<MVAEl1Cut && nt.el_mva_unbiased[iel2]<MVAEl1Cut) continue;
-       }
-       if(fabs(nt.el_vz[iel]-nt.el_vz[iel2])>DzeeMaxCut) continue;
-       TLorentzVector vel1,vel2; 
-       vel1.SetPtEtaPhiM(nt.el_pt[iel],nt.el_eta[iel],nt.el_phi[iel],0.000511);
-       vel2.SetPtEtaPhiM(nt.el_pt[iel2],nt.el_eta[iel2],nt.el_phi[iel2],0.000511);
-       if((vel1+vel2).M()<MLLmin_Cut || (vel1+vel2).M()>MLLmax_Cut) continue; 
-       muTrack1.push_back(ettks[iel]); muTrack2.push_back(ettks[iel2]);
-       used_eTrack_index.emplace_back(iel,iel2);
+      if (CombineElCol || !IsLowpTE){
+        for (const pat::Electron & el : *electrons) {     
+          if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
+            isE=true;
+        }
+      }
+     
+      if(isMu || isE ) continue;
+      nt.track_pt.push_back(trk.pt()); nt.track_eta.push_back(trk.eta());
+      nt.track_phi.push_back(trk.phi()); nt.track_charge.push_back(trk.charge());
+     
+      if(trk.trackHighPurity()) nt.track_highPurity.push_back(1);
+      else nt.track_highPurity.push_back(0);
+     
+      nt.track_norm_chi2.emplace_back(trk.pseudoTrack().normalizedChi2());
+      nt.track_dxy.push_back(trk.dxy(vertex_point));
+      nt.track_dz.push_back(trk.dz(vertex_point));
+      nt.track_validhits.push_back(trk.numberOfHits());
+      nt.track_losthits.push_back(trk.lostInnerHits());
+      nt.track_fromPV.push_back(trk.fromPV()); nt.ntracks++;  
+    }
+  }//save tracks
+
+  if(!reconstructBMuMuK && !reconstructBMuMuKstar){ 
+    t1->Fill(); 
+    return; 
+  }  
+
+  //muon pairs 
+  if(!OnlyKee){
+//     std::cout << "into muon loop" << std::endl;
+    for (int imu=0; imu<nt.nmuons; ++imu){
+      if (!nt.muon_soft[imu]) continue;
+      if(nt.muon_pt[imu]< min_muon_pt_cut_forB) continue;
+      for (int imu2=imu+1; imu2<nt.nmuons; ++imu2){
+        if (!nt.muon_soft[imu2]) continue; 
+        if(nt.muon_pt[imu2]< min_muon_pt_cut_forB) continue;
+//         std::cout << "i have 2 mu" << std::endl;
+
+        if (nt.muon_charge[imu]==nt.muon_charge[imu2]) continue;
+        if (nt.muon_pt[imu]< max_muon_pt_cut_forB && nt.muon_pt[imu2]< max_muon_pt_cut_forB) continue;
+//         std::cout << "builind jpsi" << std::endl;
+        TLorentzVector vmu1,vmu2; 
+        vmu1.SetPtEtaPhiM(nt.muon_pt[imu], nt.muon_eta[imu] ,nt.muon_phi[imu] , 0.105);
+        vmu2.SetPtEtaPhiM(nt.muon_pt[imu2],nt.muon_eta[imu2],nt.muon_phi[imu2], 0.105);
+        if((vmu1+vmu2).M()<MLLmin_Cut || (vmu1+vmu2).M()>MLLmax_Cut) continue;
+//         std::cout << "found one jpi" << std::endl;
+        muTrack1.push_back(muttks[imu]); 
+        muTrack2.push_back(muttks[imu2]);
+        used_muTrack_index.emplace_back(imu,imu2);
+        nmupairs++;
+      }
+    }
+  } 
+ 
+  //e pairs
+  if(AddeeK || OnlyKee ){
+    for(int iel=0; iel<nt.nel; ++iel){
+      if (UseDirectlyGenBeeK && !data){
+        if ( DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
+             DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone) 
+             continue;
+      }
+      for (int iel2=iel+1; iel2<nt.nel; ++iel2){
+        if (nt.el_charge[iel]==nt.el_charge[iel2]) continue;
+        if (nt.el_pt[iel2] < Electron1PtCut && \
+            nt.el_pt[iel]  < Electron1PtCut) 
+            continue;
+        if (UseDirectlyGenBeeK && !data){
+          if (DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
+              DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
+              continue;
+        }
+        if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
+          if (nt.el_mva_unbiased[iel]  < MVAEl1Cut && \
+              nt.el_mva_unbiased[iel2] < MVAEl1Cut) 
+              continue;
+        }
+        if ( fabs(nt.el_vz[iel]-nt.el_vz[iel2]) > DzeeMaxCut) continue;
+        TLorentzVector vel1,vel2; 
+        vel1.SetPtEtaPhiM(nt.el_pt[iel] , nt.el_eta[iel] , nt.el_phi[iel] , 0.000511);
+        vel2.SetPtEtaPhiM(nt.el_pt[iel2], nt.el_eta[iel2], nt.el_phi[iel2], 0.000511);
+        if( (vel1+vel2).M() < MLLmin_Cut || \
+            (vel1+vel2).M() > MLLmax_Cut) 
+            continue; 
+        muTrack1.push_back(ettks[iel]); 
+        muTrack2.push_back(ettks[iel2]);
+        used_eTrack_index.emplace_back(iel,iel2);
+      }
     }
   }
- }
- /*cout<<"size "<<used_eTrack_index.size()<<endl;
- for (unsigned int i=0; i<used_eTrack_index.size(); i++)
- cout<<"fr "<<used_eTrack_index[i].first<<" sec "<<used_eTrack_index[i].second<<endl;*/
- if (used_muTrack_index.size()==0 && used_eTrack_index.size()==0){
-   if (reconstructBMuMuK && SkipEventWithNoBToMuMuK && !reconstructBMuMuKstar) return;
-   else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK) return;
-   else if (reconstructBMuMuK && SkipEventWithNoBToMuMuK && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
-}
+
+  if (used_muTrack_index.size()==0 && used_eTrack_index.size()==0){
+    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) return;
+    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) return;
+    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
+  }
  
-if (RetrieveMuFromTrk){
-   nmupfpairs=nmupairs;
-   for (const pat::Muon & mu : *muons){
-     if (fabs(TrgmuDz-mu.vz())>ElectronDzCut) continue;
-     if (mu.pt()<min_muon_pt_cut_forB) continue;
-     if (fabs(mu.eta())>2.5) continue;
-     if (!mu.isSoftMuon(firstGoodVertex)) continue;
-     for(const pat::PackedCandidate &trk: tracks){
-       if(mu.charge()==trk.charge()) continue;
-       if(trk.charge()==0) continue;
-       if(fabs(trk.pdgId())!=211) continue;
-       if(!trk.hasTrackDetails())continue;
-       if (trk.pt()< min_muon_pt_cut_forB) continue;
-       if (fabs(trk.eta())>EtaTrk_Cut) continue;
-       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
-       if(trk.pt()>maxPtTrk) continue;
-       TLorentzVector vmu1,vmu2;
-       vmu1.SetPtEtaPhiM(mu.pt(),mu.eta(),mu.phi(),0.105);
-       vmu1.SetPtEtaPhiM(trk.pt(),trk.eta(),trk.phi(),0.105);
-       if ((vmu1+vmu2).M()<MLLmin_Cut || (vmu1+vmu2).M()>MLLmax_Cut) continue;
-       muTrack1.emplace_back(reco::TransientTrack(*mu.bestTrack(),&(*bFieldHandle)));
-       muTrack2.emplace_back(reco::TransientTrack(trk.pseudoTrack(),&(*bFieldHandle)));
-       used_muTrack_pfTrack_index.emplace_back(std::make_pair(&mu-&(muons->at(0)),&trk-&tracks[0]));      
-       nmupfpairs++;
-     }
+  if (RetrieveMuFromTrk){
+    nmupfpairs=nmupairs;
+    for (const pat::Muon & mu : *muons)
+    {
+      if (fabs(TrgmuDz-mu.vz())>ElectronDzCut) continue;
+      if (mu.pt()<min_muon_pt_cut_forB) continue;
+      if (fabs(mu.eta())>2.5) continue;
+      if (!mu.isSoftMuon(firstGoodVertex)) continue;
+      for(const pat::PackedCandidate &trk: tracks){
+        if(mu.charge()==trk.charge()) continue;
+        if(trk.charge()==0) continue;
+        if(fabs(trk.pdgId())!=211) continue;
+        if(!trk.hasTrackDetails())continue;
+        if (trk.pt()< min_muon_pt_cut_forB) continue;
+        if (fabs(trk.eta())>EtaTrk_Cut) continue;
+        if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
+        if(trk.pt()>maxPtTrk) continue;
+        TLorentzVector vmu1,vmu2;
+        vmu1.SetPtEtaPhiM(mu.pt() , mu.eta() , mu.phi() , 0.105);
+        vmu1.SetPtEtaPhiM(trk.pt(), trk.eta(), trk.phi(), 0.105);
+        if ((vmu1+vmu2).M()<MLLmin_Cut || \
+            (vmu1+vmu2).M()>MLLmax_Cut ) 
+            continue;
+        muTrack1.emplace_back(reco::TransientTrack(*mu.bestTrack(),   &(*bFieldHandle) ) );
+        muTrack2.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle) ) );
+        used_muTrack_pfTrack_index.emplace_back(std::make_pair( &mu-&(muons->at(0)), &trk-&tracks[0]));      
+        nmupfpairs++;
+      } 
     }
-}
-int index=-1;
-if((used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && (reconstructBMuMuK || reconstructBMuMuKstar)){
- for (const pat::PackedCandidate & trk: tracks){
-   index++;
-   if(trk.charge()==0) continue;
-   if(fabs(trk.pdgId())!=211) continue;
-   if(!trk.hasTrackDetails())continue;
-   reco::Track ptrk=trk.pseudoTrack();
-   if (ptrk.pt()< track_pt_cut_forB) continue;
-   if (fabs(ptrk.eta())>EtaTrk_Cut) continue;
-   if (UseDirectlyGenBeeK){
-      if (DR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
-	continue;
+  }
+  
+  int index=-1;
+  if ( (used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && \
+       (reconstructBMuMuK || reconstructBMuMuKstar) )
+  {
+    for (const pat::PackedCandidate & trk: tracks)
+    {
+      index++;
+      if(trk.charge()==0)        continue;
+      if(fabs(trk.pdgId())!=211) continue;
+      if(!trk.hasTrackDetails()) continue;
+      reco::Track ptrk = trk.pseudoTrack();
+      if (ptrk.pt() < track_pt_cut_forB) continue;
+      if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
+      if (UseDirectlyGenBeeK){
+        if (DR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
+   	      continue;
+      }
+      if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
+      bool isMu = false; 
+      bool isE  = false;
+      for (const pat::Muon & mu : *muons){
+        if (DR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+        isMu=true; 
+      }
+      // sara: don't understand
+      if (!IsLowpTE || CombineElCol){
+        for (const pat::Electron & el: *electrons) {     
+          if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+            isE=true;
+        } 
+      }
+      if(isMu || isE ) continue;
+      KTrack.emplace_back(reco::TransientTrack(ptrk,&(*bFieldHandle)));
+      KTrack_index.push_back(&trk-&tracks[0]);  
     }
-   if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
-   bool isMu=false; bool isE=false;
-   for (const pat::Muon & mu : *muons){
-     if (DR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
-       isMu=true; 
-   }
-   if (!IsLowpTE || CombineElCol){
-     for (const pat::Electron & el: *electrons) {     
-        if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
-           isE=true;
-   } }
-   if(isMu || isE ) continue;
-   KTrack.emplace_back(reco::TransientTrack(ptrk,&(*bFieldHandle)));
-   KTrack_index.push_back(&trk-&tracks[0]);  
-   }
- }
+  }
 
 
 
-//add pf
+  //add pf
   if (used_muTrack_pfTrack_index.size()>0)
-    used_muTrack_index.insert(used_muTrack_index.end(),used_muTrack_pfTrack_index.begin(),used_muTrack_pfTrack_index.end());
- //add ee chanel 
- if (used_eTrack_index.size()>0)
-   used_muTrack_index.insert(used_muTrack_index.end(),used_eTrack_index.begin(),used_eTrack_index.end());
+    used_muTrack_index.insert(used_muTrack_index.end(), used_muTrack_pfTrack_index.begin(), used_muTrack_pfTrack_index.end());
+  //add ee chanel 
+  if (used_eTrack_index.size()>0)
+    used_muTrack_index.insert(used_muTrack_index.end(), used_eTrack_index.begin(), used_eTrack_index.end());
  
- ///building B 
- if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuK){
-
-    BKlldecay Kll(nmupairs,used_muTrack_index,muTrack1,muTrack2,KTrack,beam_xz,beam_yz,RefitTracks);
-    Kll.ProbCut(Pchi2BMuMuK); Kll.CosCut(CosThetaCut); 
-    Kll.MassCuts(MBmin_Cut,MBmax_Cut); Kll.PtBCut(PtBminCut); 
+  ///building B 
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuK)
+  {
+    BKlldecay Kll(nmupairs,
+                  used_muTrack_index,
+                  muTrack1,
+                  muTrack2,
+                  KTrack,
+                  beam_xz,
+                  beam_yz,
+                  RefitTracks
+                  );
+    Kll.ProbCut(Pchi2BMuMuK); 
+    Kll.CosCut(CosThetaCut); 
+    Kll.MassCuts(MBmin_Cut,MBmax_Cut); 
+    Kll.PtBCut(PtBminCut); 
     Kll.SetNumTrkForMu(nmupfpairs); 
     Kll.Fill(nt);  
- } 
+  } 
 
- if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar){
-    BKstarlldecay Kstarll(nmupairs,used_muTrack_index,muTrack1,muTrack2,KTrack,beam_xz,beam_yz,RefitTracks);
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar)
+  {
+    BKstarlldecay Kstarll(nmupairs,
+                          used_muTrack_index,
+                          muTrack1,
+                          muTrack2,
+                          KTrack,
+                          beam_xz,
+                          beam_yz,
+                          RefitTracks
+                          );
     Kstarll.CombineTracks(0.600,1.100);
     Kstarll.Fill(nt);
  } 
 
- if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar){
-   BKstarlldecay phill(nmupairs,used_muTrack_index,muTrack1,muTrack2,KTrack,beam_xz,beam_yz,RefitTracks);
-    phill.Runphill(true); phill.CombineTracks(0.600,1.100);
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar)
+  {
+    BKstarlldecay phill(nmupairs,
+                        used_muTrack_index,
+                        muTrack1,
+                        muTrack2,
+                        KTrack,
+                        beam_xz,
+                        beam_yz,
+                        RefitTracks
+                        );
+    phill.Runphill(true); 
+    phill.CombineTracks(0.600,1.100);
     phill.FillPhill(nt);
   }
 
   //skip useless events
   if (nt.NRb_mass.size()==0 && nt.NRbks_mass.size()==0){
-   if (reconstructBMuMuK && SkipEventWithNoBToMuMuK && !reconstructBMuMuKstar) return;
-   else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK) return;
-   else if (reconstructBMuMuK && SkipEventWithNoBToMuMuK && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
-}  
-if (NtupleOutputClasses=="flat") nt.Flatting();
+    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) return;
+    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) return;
+    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
+  }  
+  
+  if (NtupleOutputClasses=="flat") nt.Flatting();
   t1->Fill();
 }
 

@@ -4,16 +4,31 @@ import FWCore.ParameterSet.Config as cms
 
 IsData=True
 Run="A"
-Nentries=100;  output="output_flat.root"; mlog=10000; 
-saveTrk=False; NtupleClasses="flat"; #options: all,auto,class,lite or flat
+Nentries=1000;  
+output="output_flat.root"; 
+mlog=100; 
+saveTrk=False; 
+NtupleClasses="flat"; #options: all,auto,class,lite or flat
+
+MuonsOnly     = True; 
+ElectronsOnly = True; 
+
+
 TrgMuCone=0.1
-UseLowpTe=False; LowPtElCollection=False; CombinePFLowPtEl=True;
-LowPtGsfTrkCollection=False; PFelCollection=False;
+UseLowpTe=False; 
+LowPtElCollection=False; 
+CombinePFLowPtEl=True;
+LowPtGsfTrkCollection=False; 
+PFelCollection=False;
 elcuts=dict(El1Pt=1.5,El2Pt=0.5,Dz=0.7,DzeeMax=1.0,El1WP=3,El2WP=-4,PFLowPtCone=0.03)
-EtaCut=2.5; TrkPtCut=0.8; MuPtCut=0.5;
+EtaCut=2.5; 
+TrkPtCut=0.8; 
+MuPtCut=0.5;
 RetrieveMuFromTrk=dict(algo=False,maxPtTrk=4)
-RecoBtoKLepLep=True; RecoBtoKstarLepLep=False; SkipEventWithNoRecoB=True
-MuonsOnly=False; ElectronsOnly=True; addlostTrk=True
+RecoBtoKLepLep=True; 
+RecoBtoKstarLepLep=False; 
+SkipEventWithNoRecoB=True
+addlostTrk=True
 RefitTracksForB="mu" #options: mu (only mu), both (mu + e) and none(PF used).Refitted tracks used to calculate B properties.
 Bcuts=dict(Prob=0.00000001,Cos=0,MinM=4.5,MaxM=6,MinMll=0,MaxMll=5,PtMin=3.0);
 GenRecoMatch=False
@@ -21,7 +36,7 @@ Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
 # '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
 #'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
-'/store/data/Run2018D/ParkingBPH4/MINIAOD/20Mar2019-v1/110000/A336D5D0-93A3-D944-A82A-8FA4165A5B2B.root'
+'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
 ]
 ############ for debug evt 1242 run 1 ls 13
  #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
@@ -47,8 +62,8 @@ if RecoBtoKLepLep :
 if RecoBtoKstarLepLep :
    print "reconstructing B->K*(J/psi)ll->Kpill channel"
 
-Addel=True
-Onlyel=False
+Addel  = True
+Onlyel = False
 if MuonsOnly and not ElectronsOnly:
   Addel=False 
 elif ElectronsOnly and not MuonsOnly:
@@ -81,7 +96,7 @@ globaltag='102X_upgrade2018_realistic_v15'
 L1save=False ; HLTsave=False ; HLTfired=False
 if IsData:
    print "We have established we Run on data"
-   globaltag='101X_dataRun2_Prompt_v11'
+   globaltag='102X_dataRun2_Sep2018Rereco_v1'
    L1save=True ; HLTsave=True ; HLTfired=True
 else:
    print "We have established we Run on MC"
@@ -113,8 +128,6 @@ process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
            File
    ),
-#   eventsToProcess=cms.untracked.VEventRange('1:12674:1267332-1:12674:1267332'),
-#eventsToProcess=cms.untracked.VEventRange('1:68462:MIN-1:68462:MAX'),
    secondaryFileNames=cms.untracked.vstring(
 ),
  
@@ -123,7 +136,6 @@ process.source = cms.Source("PoolSource",
                   'drop *_ctppsPixelClusters_*_*',
                   
           ),
- #  eventsToProcess=cms.untracked.VEventRange('317650:2:557156','317650:2:1023393','317650:2:710785','317650:2:769853')
 
 )
 '''process.selectedPFCandidatesHP = cms.EDFilter("PATPackedCandidateSelector",
@@ -145,68 +157,87 @@ for idmod in my_id_modules:
 
 
 process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
-                              beamSpot = cms.InputTag('offlineBeamSpot'),
-                              electrons    = cms.InputTag(electron_container),
-                              lowptElectrons =cms.InputTag(electron_container2),
-                              lowptGsftracks=cms.InputTag("lowPtGsfEleGsfTracks"),
-                              pfElectrons =cms.InputTag("slimmedElectrons"),
-                              vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                              jets = cms.InputTag("slimmedJets"),
-                              photons = cms.InputTag("slimmedPhotons"),
-                              eleIdMapVeto = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                              eleIdMapSoft = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose"),
+                              beamSpot       = cms.InputTag('offlineBeamSpot'),
+                              electrons      = cms.InputTag(electron_container),
+                              lowptElectrons = cms.InputTag(electron_container2),
+                              lowptGsftracks = cms.InputTag("lowPtGsfEleGsfTracks"),
+                              pfElectrons    = cms.InputTag("slimmedElectrons"),
+                              vertices       = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                              jets           = cms.InputTag("slimmedJets"),
+                              photons        = cms.InputTag("slimmedPhotons"),
+                              eleIdMapVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
+                              eleIdMapSoft   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose"),
                               eleIdMapMedium = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp90"),
-                             eleIdMapTight = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp80"),
-                              eleIdMapValue = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Categories"),
-                              eleBiasedWP = cms.InputTag("lowPtGsfElectronSeedValueMaps","ptbiased","RECO"),
-                              eleUnbiasedWP = cms.InputTag("lowPtGsfElectronSeedValueMaps","unbiased","RECO"),
+                              eleIdMapTight   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp80"),
+                              eleIdMapValue  = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Categories"),
+                              eleBiasedWP    = cms.InputTag("lowPtGsfElectronSeedValueMaps","ptbiased","RECO"),
+                              eleUnbiasedWP  = cms.InputTag("lowPtGsfElectronSeedValueMaps","unbiased","RECO"),
                               #If you want no L1_Seed, write "default" in the first element and the tree will write the value -100
-                               Seed=cms.vstring("L1_SingleMu7er1p5","L1_SingleMu8er1p5","L1_SingleMu9er1p5","L1_SingleMu10er1p5","L1_SingleMu12er1p5","L1_SingleMu22"),
-                              HLTPath=cms.vstring(n1,n2,n3,n4,n5,n6,n7,n8),
+                              Seed           = cms.vstring("L1_SingleMu7er1p5","L1_SingleMu8er1p5","L1_SingleMu9er1p5","L1_SingleMu10er1p5","L1_SingleMu12er1p5","L1_SingleMu22"),
+                              HLTPath        = cms.vstring(n1,n2,n3,n4,n5,n6,n7,n8),
 ################################NORMALLY USE THIS####################### 
                               triggerresults = cms.InputTag("TriggerResults::HLT"),
                               triggerobjects = cms.InputTag('slimmedPatTrigger',),                   
-                              muons=cms.InputTag("slimmedMuons"),
-                              met=cms.InputTag("slimmedMETs"),
-                              l1seed=cms.InputTag("gtStage2Digis::RECO"),
-                              l1met=cms.InputTag('caloStage2Digis','EtSum'), 
-                              l1muons=cms.InputTag("gmtStage2Digis","Muon"),
-                              l1jets=cms.InputTag('caloStage2Digis','Jet'),                            
-                              packed = cms.InputTag("packedGenParticles"),
-                              pruned = cms.InputTag("prunedGenParticles"),
-                              PFCands=cms.InputTag("packedPFCandidates"),
-                              losttracks=cms.InputTag("lostTracks"),
+                              muons         = cms.InputTag("slimmedMuons"),
+                              met           = cms.InputTag("slimmedMETs"),
+                              l1seed        = cms.InputTag("gtStage2Digis::RECO"),
+                              l1met         = cms.InputTag('caloStage2Digis','EtSum'), 
+                              l1muons       = cms.InputTag("gmtStage2Digis","Muon"),
+                              l1jets        = cms.InputTag('caloStage2Digis','Jet'),                            
+                              packed        = cms.InputTag("packedGenParticles"),
+                              pruned        = cms.InputTag("prunedGenParticles"),
+                              PFCands       = cms.InputTag("packedPFCandidates"),
+                              losttracks    = cms.InputTag("lostTracks"),
 
                                RunParameters = cms.PSet(
-      Data= cms.bool(IsData),SaveTracks=cms.bool(saveTrk),
-      SaveHLT=cms.bool(HLTsave),SaveL1=cms.bool(L1save),
+      Data= cms.bool(IsData),
+      SaveTracks=cms.bool(saveTrk),
+      SaveHLT=cms.bool(HLTsave),
+      SaveL1=cms.bool(L1save),
       SaveResultsOnlyIfAPathFired=cms.bool(HLTsave),
       ReconstructBMuMuK=cms.bool(RecoBtoKLepLep),
       ReconstructBMuMuKstar=cms.bool(RecoBtoKstarLepLep),
-      MuonPtCutForB=cms.double(MuPtCut),RetrieveMuFromTrk=cms.bool(RetrieveMuFromTrk["algo"]),
+      MuonMinPtCut = cms.double(1.),
+      MuonMaxPtCut = cms.double(1.),
+      MuonPtCutForB=cms.double(MuPtCut),
+      RetrieveMuFromTrk=cms.bool(RetrieveMuFromTrk["algo"]),
       maxPtTrk=cms.double(RetrieveMuFromTrk["maxPtTrk"]),
-      TrackPtCutForB=cms.double(TrkPtCut),EtaTrk_Cut=cms.double(EtaCut),
+      TrackPtCutForB=cms.double(TrkPtCut),
+      EtaTrk_Cut=cms.double(EtaCut),
       #electroncuts
-      Electron1PtCut=cms.double(elcuts["El1Pt"]),Electron2PtCut=cms.double(elcuts["El2Pt"]),
-      ElectronDzCut=cms.double(elcuts["Dz"]), DzeeMaxCut=cms.double(elcuts["DzeeMax"]),
+      Electron1PtCut=cms.double(elcuts["El1Pt"]),
+      Electron2PtCut=cms.double(elcuts["El2Pt"]),
+      ElectronDzCut=cms.double(elcuts["Dz"]), 
+      DzeeMaxCut=cms.double(elcuts["DzeeMax"]),
       TrgConeCut=cms.double(TrgMuCone), 
-      IsLowpTE=cms.bool(UseLowpTe), MVAEl1Cut=cms.double(elcuts["El1WP"]),
-      MVAEl2Cut=cms.double(elcuts["El2WP"]),PointingConstraint=cms.bool(False),
-      CosThetaCutPointCons=cms.bool(False), UseClosestVertex=cms.bool(False),
-      SkipEventWithNoBToMuMuK=cms.bool(SkipNoKLL),UseBeamspot=cms.bool(False),
+      IsLowpTE=cms.bool(UseLowpTe), 
+      MVAEl1Cut=cms.double(elcuts["El1WP"]),
+      MVAEl2Cut=cms.double(elcuts["El2WP"]),
+      PointingConstraint=cms.bool(False),
+      CosThetaCutPointCons=cms.bool(False), 
+      UseClosestVertex=cms.bool(False),
+      SkipEventWithNoBToMuMuK=cms.bool(SkipNoKLL),
+      UseBeamspot=cms.bool(False),
       UsePFeForCos=cms.bool(True),
-      AddeeK=cms.bool(Addel),MLLmax_Cut=cms.double(Bcuts["MaxMll"]),
+      AddeeK=cms.bool(Addel),
+      MLLmax_Cut=cms.double(Bcuts["MaxMll"]),
       MLLmin_Cut=cms.double(Bcuts["MinMll"]),
-      MBmin_Cut=cms.double(Bcuts["MinM"]),MBmax_Cut=cms.double(Bcuts["MaxM"]),
+      MBmin_Cut=cms.double(Bcuts["MinM"]),
+      MBmax_Cut=cms.double(Bcuts["MaxM"]),
       PtBminCut=cms.double(Bcuts["PtMin"]),
-      CosThetaCut=cms.double(Bcuts["Cos"]),ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
-      CombineElCol=cms.bool(CombinePFLowPtEl),CombineCone=cms.double(elcuts["PFLowPtCone"]),
-      MKstarMin_Cut=cms.double(0.742),MKstarMax_Cut=cms.double(1.042),
-      LepTrkExclusionCone=cms.double(0.005),AddLostTracks=cms.bool(addlostTrk),
+      CosThetaCut=cms.double(Bcuts["Cos"]),
+      ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
+      CombineElCol=cms.bool(CombinePFLowPtEl),
+      CombineCone=cms.double(elcuts["PFLowPtCone"]),
+      MKstarMin_Cut=cms.double(0.742),
+      MKstarMax_Cut=cms.double(1.042),
+      LepTrkExclusionCone=cms.double(0.005),
+      AddLostTracks=cms.bool(addlostTrk),
       RefitTracks=cms.string(RefitTracksForB),
       OnlyKee=cms.bool(Onlyel),
       SkipEventWithNoBToMuMuKstar=cms.bool(SkipNoKsLL),
-      UseDirectlyGenBeeK=cms.bool(GenRecoMatch),DRgenCone=cms.double(Bdecaymatch["DR"]),
+      UseDirectlyGenBeeK=cms.bool(GenRecoMatch),
+      DRgenCone=cms.double(Bdecaymatch["DR"]),
       BpdgIdToMatch=cms.int32(Bdecaymatch["PdgId"]),
       LepIdToMatch=cms.int32(Bdecaymatch["LepId"]),
       KIdToMatch=cms.int32(Bdecaymatch["KId"]),
