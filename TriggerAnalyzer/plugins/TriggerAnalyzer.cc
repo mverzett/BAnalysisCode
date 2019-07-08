@@ -145,36 +145,72 @@ private:
   NtupleContent nt;
   int nevts=0;
   ///options
-   bool data=true; bool saveTracks=true; bool saveHLT=true; bool saveL1=true;
-   bool saveOnlyHLTFires=false; double track_pt_cut_forB=0;
-   double min_muon_pt_cut_forB=0; bool reconstructBMuMuK=true;
-   double max_muon_pt_cut_forB=0;
-   bool Pointing_constraint=false; bool reconstructBMuMuKstar=true;
-  double Pchi2BMuMuK=-1; double MLLmax_Cut=100; double MLLmin_Cut=-1;
-  bool SkipEventWithNoBToMuMuK=false; bool UseBeamspot=false; bool AddeeK=false;
-  double MBmax_Cut=100; double MBmin_Cut=-1; 
-  double  LepTrkExclusionCone=-1; double EtaTrk_Cut=5; bool AddLostTracks=true;
-  double MKstarMin_Cut=0.5; double MKstarMax_Cut=1.5; 
-  std::string RefitTracks="none"; bool UsePFeForCos=true; bool OnlyKee=false;
-  bool SkipEventWithNoBToMuMuKstar=false; double Electron1PtCut=0;
-  double Electron2PtCut=0; double ElectronDzCut=0; double TrgConeCut=-1;
-  bool IsLowpTE=false; double MVAEl1Cut=-20; double MVAEl2Cut=-20;
-  double CosThetaCut=-1; bool UseDirectlyGenBeeK=false; double DRgenCone=10;
-  int KIdToMatch=-1; int LepIdToMatch=-1; int BpdgIdToMatch=-1;
-  bool IsResonantDecayToMatch=false; bool AddLowPtElAsCol=false;
-  bool AddLowPtGsfTrkAsCol=false; bool AddPFElAsCol=false;
-  std::string NtupleOutputClasses="auto"; bool CombineElCol=false;
-  double CombineCone=0; bool RetrieveMuFromTrk=false; double maxPtTrk=0;
-  double DzeeMaxCut=1000; double PtBminCut=0;
+  bool data=true; 
+  bool saveTracks=true; 
+  bool saveHLT=true; 
+  bool saveL1=true;
+  bool saveOnlyHLTFires=false; 
+  double track_pt_cut_forB=0;
+  double min_muon_pt_cut_forB=0; 
+  bool reconstructBMuMuK=true;
+  double max_muon_pt_cut_forB=0;
+  bool Pointing_constraint=false; 
+  bool reconstructBMuMuKstar=true;
+  double Pchi2BMuMuK=-1; 
+  double MLLmax_Cut=100; 
+  double MLLmin_Cut=-1;
+  bool SkipEventWithNoBToMuMuK=false; 
+  bool UseBeamspot=false; 
+  bool AddeeK=false;
+  double MBmax_Cut=100; 
+  double MBmin_Cut=-1; 
+  
+  double  LepTrkExclusionCone=-1; 
+  double EtaTrk_Cut=5; 
+  bool AddLostTracks=true;
+  double MKstarMin_Cut=0.5; 
+  double MKstarMax_Cut=1.5; 
+  
+  std::string RefitTracks="none"; 
+  bool UsePFeForCos=true; 
+  bool OnlyKee=false;
+  bool SkipEventWithNoBToMuMuKstar=false; 
+  double Electron1PtCut=0;
+  double Electron2PtCut=0; 
+  double ElectronDzCut=0; 
+  double TrgConeCut=-1;
+  bool IsLowpTE=false; 
+  double MVAEl1Cut=-20; 
+  double MVAEl2Cut=-20;
+  double CosThetaCut=-1; 
+  bool UseDirectlyGenBeeK=false; 
+  double DRgenCone=10;
+  int KIdToMatch=-1; 
+  int LepIdToMatch=-1; 
+  int BpdgIdToMatch=-1;
+  bool IsResonantDecayToMatch=false; 
+  bool AddLowPtElAsCol=false;
+  bool AddLowPtGsfTrkAsCol=false; 
+  bool AddPFElAsCol=false;
+  std::string NtupleOutputClasses="auto"; 
+  bool CombineElCol=false;
+  double CombineCone=0; 
+  bool RetrieveMuFromTrk=false; 
+  double maxPtTrk=0;
+  double DzeeMaxCut=1000; 
+  double PtBminCut=0;
   //internal
   std::vector<std::pair<float,float>> PFe_EtaPhi;
   std::vector<reco::TransientTrack> KTrack;
   std::vector<unsigned int> KTrack_index;
-  unsigned int nmupairs=0; float TrgmuDz=0,DRtrgMu=100; int count=0;
+  unsigned int nmupairs=0; 
+  float TrgmuDz=0,DRtrgMu=100; 
+  int count=0;
   std::vector<reco::TransientTrack> muttks,ettks;
   std::vector<reco::TransientTrack> muTrack1,muTrack2,muPfTrack1,muPfTrack2;
   std::vector<std::pair<unsigned int,unsigned int>> used_muTrack_index,used_eTrack_index,used_muTrack_pfTrack_index;
-  std::vector<reco::CandidatePtr> footprint; std::vector<pat::PackedCandidate> tracks;
+  std::vector<reco::CandidatePtr> footprint; 
+  std::vector<pat::PackedCandidate> tracks;
   int nmupfpairs=0;
   reco::TrackBase::Point vertex_point;
 
@@ -187,89 +223,89 @@ private:
 //
 template<typename T1>
 TriggerAnalyzer<T1>::TriggerAnalyzer(const edm::ParameterSet& iConfig): 
- beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))),
- vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
- electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
- lowPtElectronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("lowptElectrons"))),
- lowPtGsfTracksToken_(consumes<vector<reco::GsfTrack>>(iConfig.getParameter<edm::InputTag>  ("lowptGsftracks"))),
+  beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))),
+  vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
+  electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
+  lowPtElectronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("lowptElectrons"))),
+  lowPtGsfTracksToken_(consumes<vector<reco::GsfTrack>>(iConfig.getParameter<edm::InputTag>  ("lowptGsftracks"))),
   pfElectronsToken_(consumes<vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("pfElectrons"))),
- muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
- jetsToken_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>  ("jets"))),
- metToken_(consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("met"))),
+  muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
+  jetsToken_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>  ("jets"))),
+  metToken_(consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("met"))),
 // photonToken_(consumes<std::vector<pat::Photon>>(iConfig.getParameter<edm::InputTag>("photons"))),
- PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
- LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
+  PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
+  LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
 // Tracks_(consumes<std::vector<reco::Track> >(iConfig.getParameter<edm::InputTag>("tracks"))),
- eleIdMapVetoToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapVeto"))),
- eleIdMapSoftToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapSoft"))),
- eleIdMapMediumToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapMedium"))),
- eleIdMapTightToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapTight"))),
- elIdMapValueToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("eleIdMapValue"))),
- eleBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleBiasedWP"))),
+  eleIdMapVetoToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapVeto"))),
+  eleIdMapSoftToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapSoft"))),
+  eleIdMapMediumToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapMedium"))),
+  eleIdMapTightToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapTight"))),
+  elIdMapValueToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("eleIdMapValue"))),
+  eleBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleBiasedWP"))),
   eleUnBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleUnbiasedWP"))),
- l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
- l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
- l1JetsToken_(consumes<l1t::JetBxCollection>(iConfig.getParameter<edm::InputTag>("l1jets"))),
- l1MetToken_(consumes<BXVector<l1t::EtSum> >(iConfig.getParameter<edm::InputTag>("l1met"))),
- Seed_(iConfig.getParameter<vector<string> >("Seed")),
- trgresultsToken_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag> ("triggerresults"))),
- trigobjectsToken_(consumes<vector<pat::TriggerObjectStandAlone>>(iConfig.getParameter<edm::InputTag> ("triggerobjects"))),
- HLTPath_(iConfig.getParameter<vector<string> >("HLTPath")),
- prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
-packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed")))
+  l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
+  l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
+  l1JetsToken_(consumes<l1t::JetBxCollection>(iConfig.getParameter<edm::InputTag>("l1jets"))),
+  l1MetToken_(consumes<BXVector<l1t::EtSum> >(iConfig.getParameter<edm::InputTag>("l1met"))),
+  Seed_(iConfig.getParameter<vector<string> >("Seed")),
+  trgresultsToken_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag> ("triggerresults"))),
+  trigobjectsToken_(consumes<vector<pat::TriggerObjectStandAlone>>(iConfig.getParameter<edm::InputTag> ("triggerobjects"))),
+  HLTPath_(iConfig.getParameter<vector<string> >("HLTPath")),
+  prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
+  packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed")))
 {
 
   edm::ParameterSet runParameters=iConfig.getParameter<edm::ParameterSet>("RunParameters");
- data=runParameters.getParameter<bool>("Data");
- saveTracks=runParameters.getParameter<bool>("SaveTracks");
- saveHLT=runParameters.getParameter<bool>("SaveHLT");
- saveL1=runParameters.getParameter<bool>("SaveL1");
- saveOnlyHLTFires=runParameters.getParameter<bool>("SaveResultsOnlyIfAPathFired");
- reconstructBMuMuK=runParameters.getParameter<bool>("ReconstructBMuMuK");
+  data=runParameters.getParameter<bool>("Data");
+  saveTracks=runParameters.getParameter<bool>("SaveTracks");
+  saveHLT=runParameters.getParameter<bool>("SaveHLT");
+  saveL1=runParameters.getParameter<bool>("SaveL1");
+  saveOnlyHLTFires=runParameters.getParameter<bool>("SaveResultsOnlyIfAPathFired");
+  reconstructBMuMuK=runParameters.getParameter<bool>("ReconstructBMuMuK");
   reconstructBMuMuKstar=runParameters.getParameter<bool>("ReconstructBMuMuKstar");
 
- min_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMinPtCut");
- max_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMaxPtCut");
- track_pt_cut_forB=runParameters.getParameter<double>("TrackPtCutForB"); 
- Pchi2BMuMuK=runParameters.getParameter<double>("ProbBMuMuKcut");
- SkipEventWithNoBToMuMuK=runParameters.getParameter<bool>("SkipEventWithNoBToMuMuK");
- SkipEventWithNoBToMuMuKstar=runParameters.getParameter<bool>("SkipEventWithNoBToMuMuKstar");
- UseBeamspot=runParameters.getParameter<bool>("UseBeamspot");
- AddeeK=runParameters.getParameter<bool>("AddeeK");
- MLLmax_Cut=runParameters.getParameter<double>("MLLmax_Cut");
- MLLmin_Cut=runParameters.getParameter<double>("MLLmin_Cut");
- MBmax_Cut=runParameters.getParameter<double>("MBmax_Cut");
- MBmin_Cut=runParameters.getParameter<double>("MBmin_Cut");
- LepTrkExclusionCone=runParameters.getParameter<double>("LepTrkExclusionCone");
- EtaTrk_Cut=runParameters.getParameter<double>("EtaTrk_Cut");
- AddLostTracks=runParameters.getParameter<bool>("AddLostTracks");
- RefitTracks=runParameters.getParameter<std::string>("RefitTracks");
- UsePFeForCos=runParameters.getParameter<bool>("UsePFeForCos");
- OnlyKee=runParameters.getParameter<bool>("OnlyKee");
- ElectronDzCut=runParameters.getParameter<double>("ElectronDzCut");
- Electron1PtCut=runParameters.getParameter<double>("Electron1PtCut");
- Electron2PtCut=runParameters.getParameter<double>("Electron2PtCut");
- TrgConeCut=runParameters.getParameter<double>("TrgConeCut");
- IsLowpTE=runParameters.getParameter<bool>("IsLowpTE");
- MVAEl1Cut=runParameters.getParameter<double>("MVAEl1Cut");
- MVAEl2Cut=runParameters.getParameter<double>("MVAEl2Cut");
- CosThetaCut=runParameters.getParameter<double>("CosThetaCut");
- UseDirectlyGenBeeK=runParameters.getParameter<bool>("UseDirectlyGenBeeK");
- DRgenCone=runParameters.getParameter<double>("DRgenCone");
- KIdToMatch= runParameters.getParameter<int>("KIdToMatch");
- LepIdToMatch= runParameters.getParameter<int>("LepIdToMatch");
- BpdgIdToMatch=runParameters.getParameter<int>("BpdgIdToMatch");
- IsResonantDecayToMatch=runParameters.getParameter<bool>("IsResonantDecayToMatch");
- AddLowPtElAsCol=runParameters.getParameter<bool>("AddLowPtElAsCol");
- AddLowPtGsfTrkAsCol=runParameters.getParameter<bool>("AddLowGsfTrkAsCol");
- AddPFElAsCol=runParameters.getParameter<bool>("AddPFElAsCol");
- NtupleOutputClasses=runParameters.getParameter<std::string>("NtupleOutputClasses");
- CombineElCol=runParameters.getParameter<bool>("CombineElCol");
- CombineCone=runParameters.getParameter<double>("CombineCone");
- maxPtTrk=runParameters.getParameter<double>("maxPtTrk");
- RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
- DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
- PtBminCut=runParameters.getParameter<double>("PtBminCut");
+  min_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMinPtCut");
+  max_muon_pt_cut_forB=runParameters.getParameter<double>("MuonMaxPtCut");
+  track_pt_cut_forB=runParameters.getParameter<double>("TrackPtCutForB"); 
+  Pchi2BMuMuK=runParameters.getParameter<double>("ProbBMuMuKcut");
+  SkipEventWithNoBToMuMuK=runParameters.getParameter<bool>("SkipEventWithNoBToMuMuK");
+  SkipEventWithNoBToMuMuKstar=runParameters.getParameter<bool>("SkipEventWithNoBToMuMuKstar");
+  UseBeamspot=runParameters.getParameter<bool>("UseBeamspot");
+  AddeeK=runParameters.getParameter<bool>("AddeeK");
+  MLLmax_Cut=runParameters.getParameter<double>("MLLmax_Cut");
+  MLLmin_Cut=runParameters.getParameter<double>("MLLmin_Cut");
+  MBmax_Cut=runParameters.getParameter<double>("MBmax_Cut");
+  MBmin_Cut=runParameters.getParameter<double>("MBmin_Cut");
+  LepTrkExclusionCone=runParameters.getParameter<double>("LepTrkExclusionCone");
+  EtaTrk_Cut=runParameters.getParameter<double>("EtaTrk_Cut");
+  AddLostTracks=runParameters.getParameter<bool>("AddLostTracks");
+  RefitTracks=runParameters.getParameter<std::string>("RefitTracks");
+  UsePFeForCos=runParameters.getParameter<bool>("UsePFeForCos");
+  OnlyKee=runParameters.getParameter<bool>("OnlyKee");
+  ElectronDzCut=runParameters.getParameter<double>("ElectronDzCut");
+  Electron1PtCut=runParameters.getParameter<double>("Electron1PtCut");
+  Electron2PtCut=runParameters.getParameter<double>("Electron2PtCut");
+  TrgConeCut=runParameters.getParameter<double>("TrgConeCut");
+  IsLowpTE=runParameters.getParameter<bool>("IsLowpTE");
+  MVAEl1Cut=runParameters.getParameter<double>("MVAEl1Cut");
+  MVAEl2Cut=runParameters.getParameter<double>("MVAEl2Cut");
+  CosThetaCut=runParameters.getParameter<double>("CosThetaCut");
+  UseDirectlyGenBeeK=runParameters.getParameter<bool>("UseDirectlyGenBeeK");
+  DRgenCone=runParameters.getParameter<double>("DRgenCone");
+  KIdToMatch= runParameters.getParameter<int>("KIdToMatch");
+  LepIdToMatch= runParameters.getParameter<int>("LepIdToMatch");
+  BpdgIdToMatch=runParameters.getParameter<int>("BpdgIdToMatch");
+  IsResonantDecayToMatch=runParameters.getParameter<bool>("IsResonantDecayToMatch");
+  AddLowPtElAsCol=runParameters.getParameter<bool>("AddLowPtElAsCol");
+  AddLowPtGsfTrkAsCol=runParameters.getParameter<bool>("AddLowGsfTrkAsCol");
+  AddPFElAsCol=runParameters.getParameter<bool>("AddPFElAsCol");
+  NtupleOutputClasses=runParameters.getParameter<std::string>("NtupleOutputClasses");
+  CombineElCol=runParameters.getParameter<bool>("CombineElCol");
+  CombineCone=runParameters.getParameter<double>("CombineCone");
+  maxPtTrk=runParameters.getParameter<double>("maxPtTrk");
+  RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
+  DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
+  PtBminCut=runParameters.getParameter<double>("PtBminCut");
 }
 
 template<typename T1>
@@ -304,51 +340,51 @@ float TriggerAnalyzer<T1>::DR(float eta1,float phi1,float eta2, float phi2){
 
 template<typename T1> 
 std::vector<std::vector<float>> TriggerAnalyzer<T1>::track_DCA(std::vector<reco::TransientTrack> ttks) {
- std::vector<std::vector<float>> dca;
- std::vector<float> def;
- def.push_back(-9999999);
- if(ttks.size()<2) {dca.push_back(def); return dca; }
- for(unsigned int tk1=0; tk1<ttks.size(); tk1++){
-   TrajectoryStateClosestToPoint mu1TS = ttks[tk1].impactPointTSCP();
-   std::vector<float> temp1;
-   for(unsigned int tk2=tk1+1; tk2<ttks.size(); tk2++){
+  std::vector<std::vector<float>> dca;
+  std::vector<float> def;
+  def.push_back(-9999999);
+  if(ttks.size()<2) {dca.push_back(def); return dca; }
+  for(unsigned int tk1=0; tk1<ttks.size(); tk1++){
+    TrajectoryStateClosestToPoint mu1TS = ttks[tk1].impactPointTSCP();
+    std::vector<float> temp1;
+    for(unsigned int tk2=tk1+1; tk2<ttks.size(); tk2++){
       TrajectoryStateClosestToPoint mu2TS = ttks[tk2].impactPointTSCP();      
       if (mu1TS.isValid() && mu2TS.isValid()) {
         ClosestApproachInRPhi cdca;
-	cdca.calculate(mu1TS.theState(), mu2TS.theState());
+	    cdca.calculate(mu1TS.theState(), mu2TS.theState());
         if (cdca.status()) temp1.push_back(cdca.distance());
         else temp1.push_back(-999999999);
       }
       else temp1.push_back(-99999999);
-   }
-   dca.push_back(temp1);         
- }  
- return dca;
- }
+    }
+    dca.push_back(temp1);         
+  }  
+  return dca;
+}
 
 template<typename T1>
 std::vector<GlobalVector>
 TriggerAnalyzer<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks){
-    std::auto_ptr<TrajectoryStateClosestToPoint> traj1;
-    std::auto_ptr<TrajectoryStateClosestToPoint> traj2;
-    GlobalPoint vtxPos(myVertex.position().x(), myVertex.position().y(), myVertex.position().z());
-     GlobalVector gvmu1,gvmu2;
-     if(myVertex.hasRefittedTracks()){
-        std::vector<reco::TransientTrack> refited;
-        refited=myVertex.refittedTracks();
-        reco::TransientTrack* Track1 = &refited[0];
-        reco::TransientTrack* Track2= &refited[1];
-        traj1.reset(new TrajectoryStateClosestToPoint(Track1->trajectoryStateClosestToPoint(vtxPos)));
-        traj2.reset(new TrajectoryStateClosestToPoint(Track2->trajectoryStateClosestToPoint(vtxPos)));    
-        gvmu1=traj1->momentum();  gvmu2=traj2->momentum(); 
-     }         
-     else {
-        traj1.reset(new TrajectoryStateClosestToPoint(tracks[0].trajectoryStateClosestToPoint(vtxPos)));
-        traj2.reset(new TrajectoryStateClosestToPoint(tracks[1].trajectoryStateClosestToPoint(vtxPos)));
-        gvmu1=traj1->momentum();  gvmu2=traj2->momentum();
-     }                       
-   std::vector<GlobalVector> gvmu; gvmu.push_back(gvmu1); gvmu.push_back(gvmu2);
-   return gvmu;
+  std::auto_ptr<TrajectoryStateClosestToPoint> traj1;
+  std::auto_ptr<TrajectoryStateClosestToPoint> traj2;
+  GlobalPoint vtxPos(myVertex.position().x(), myVertex.position().y(), myVertex.position().z());
+  GlobalVector gvmu1,gvmu2;
+  if(myVertex.hasRefittedTracks()){
+    std::vector<reco::TransientTrack> refited;
+    refited=myVertex.refittedTracks();
+    reco::TransientTrack* Track1 = &refited[0];
+    reco::TransientTrack* Track2= &refited[1];
+    traj1.reset(new TrajectoryStateClosestToPoint(Track1->trajectoryStateClosestToPoint(vtxPos)));
+    traj2.reset(new TrajectoryStateClosestToPoint(Track2->trajectoryStateClosestToPoint(vtxPos)));    
+    gvmu1=traj1->momentum();  gvmu2=traj2->momentum(); 
+  }         
+  else {
+    traj1.reset(new TrajectoryStateClosestToPoint(tracks[0].trajectoryStateClosestToPoint(vtxPos)));
+    traj2.reset(new TrajectoryStateClosestToPoint(tracks[1].trajectoryStateClosestToPoint(vtxPos)));
+    gvmu1=traj1->momentum();  gvmu2=traj2->momentum();
+  }                       
+  std::vector<GlobalVector> gvmu; gvmu.push_back(gvmu1); gvmu.push_back(gvmu2);
+  return gvmu;
 }
 
 template<typename T1>
@@ -495,7 +531,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       if (trigger.HLTPathFire())
         TrgMu_EtaPhi=std::make_pair(trigger.GetHighestPtHLTObject()[1],trigger.GetHighestPtHLTObject()[2]);
     }
-   } 
+  } 
   //  cout<<"here trg"<<endl;
   nevts++;
 
@@ -645,7 +681,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   if (AddPFElAsCol){
       PFelCollection PFelectrons(pfElectronsToken_,eleIdMapSoftToken_,eleIdMapMediumToken_,eleIdMapTightToken_,iEvent);
       PFelectrons.AddElectrons(nt);
-   }
+  }
     /*  std::vector<std::vector<float>> mu_DCA=track_DCA(muttks);
   if (mu_DCA.size()==0) { std::vector<float> d1; d1.push_back(-99); muon_DCA.push_back(d1); }
   else muon_DCA=mu_DCA;*/
@@ -662,10 +698,8 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     }
   }
 
-  if (saveTracks)
-  {
-    for (const pat::PackedCandidate &trk : tracks)
-    {      
+  if (saveTracks){
+    for (const pat::PackedCandidate &trk : tracks){      
       if(trk.charge()==0) continue;
       if(fabs(trk.pdgId())!=211) continue;
       if(!trk.hasTrackDetails())continue;
@@ -709,23 +743,18 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   //muon pairs 
   if(!OnlyKee){
-//     std::cout << "into muon loop" << std::endl;
     for (int imu=0; imu<nt.nmuons; ++imu){
       if (!nt.muon_soft[imu]) continue;
       if(nt.muon_pt[imu]< min_muon_pt_cut_forB) continue;
       for (int imu2=imu+1; imu2<nt.nmuons; ++imu2){
         if (!nt.muon_soft[imu2]) continue; 
         if(nt.muon_pt[imu2]< min_muon_pt_cut_forB) continue;
-//         std::cout << "i have 2 mu" << std::endl;
-
         if (nt.muon_charge[imu]==nt.muon_charge[imu2]) continue;
         if (nt.muon_pt[imu]< max_muon_pt_cut_forB && nt.muon_pt[imu2]< max_muon_pt_cut_forB) continue;
-//         std::cout << "builind jpsi" << std::endl;
         TLorentzVector vmu1,vmu2; 
         vmu1.SetPtEtaPhiM(nt.muon_pt[imu], nt.muon_eta[imu] ,nt.muon_phi[imu] , 0.105);
         vmu2.SetPtEtaPhiM(nt.muon_pt[imu2],nt.muon_eta[imu2],nt.muon_phi[imu2], 0.105);
         if((vmu1+vmu2).M()<MLLmin_Cut || (vmu1+vmu2).M()>MLLmax_Cut) continue;
-//         std::cout << "found one jpi" << std::endl;
         muTrack1.push_back(muttks[imu]); 
         muTrack2.push_back(muttks[imu2]);
         used_muTrack_index.emplace_back(imu,imu2);
@@ -779,8 +808,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
  
   if (RetrieveMuFromTrk){
     nmupfpairs=nmupairs;
-    for (const pat::Muon & mu : *muons)
-    {
+    for (const pat::Muon & mu : *muons){
       if (fabs(TrgmuDz-mu.vz())>ElectronDzCut) continue;
       if (mu.pt()<min_muon_pt_cut_forB) continue;
       if (fabs(mu.eta())>2.5) continue;
@@ -810,10 +838,8 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   
   int index=-1;
   if ( (used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && \
-       (reconstructBMuMuK || reconstructBMuMuKstar) )
-  {
-    for (const pat::PackedCandidate & trk: tracks)
-    {
+       (reconstructBMuMuK || reconstructBMuMuKstar) ){
+    for (const pat::PackedCandidate & trk: tracks){
       index++;
       if(trk.charge()==0)        continue;
       if(fabs(trk.pdgId())!=211) continue;
@@ -855,8 +881,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     used_muTrack_index.insert(used_muTrack_index.end(), used_eTrack_index.begin(), used_eTrack_index.end());
  
   ///building B 
-  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuK)
-  {
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuK){
     BKlldecay Kll(nmupairs,
                   used_muTrack_index,
                   muTrack1,
@@ -874,8 +899,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     Kll.Fill(nt);  
   } 
 
-  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar)
-  {
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar){
     BKstarlldecay Kstarll(nmupairs,
                           used_muTrack_index,
                           muTrack1,
@@ -889,8 +913,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     Kstarll.Fill(nt);
  } 
 
-  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar)
-  {
+  if (used_muTrack_index.size()>0 && KTrack_index.size()>0 && reconstructBMuMuKstar){
     BKstarlldecay phill(nmupairs,
                         used_muTrack_index,
                         muTrack1,
