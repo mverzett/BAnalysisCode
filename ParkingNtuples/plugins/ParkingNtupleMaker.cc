@@ -107,7 +107,6 @@ private:
   virtual void endJob() override;
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
-  float Dphi(float phi1,float phi2);
 
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
@@ -116,8 +115,6 @@ private:
   edm::EDGetToken lowPtGsfTracksToken_;
   edm::EDGetToken pfElectronsToken_;
   edm::EDGetToken muonsToken_;
-  edm::EDGetToken jetsToken_;
-  edm::EDGetToken metToken_;
 //  edm::EDGetToken photonToken_;
   edm::EDGetToken PFCands_;
   edm::EDGetToken LostTracks_;
@@ -229,8 +226,6 @@ ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig):
   lowPtGsfTracksToken_(consumes<vector<reco::GsfTrack>>(iConfig.getParameter<edm::InputTag>  ("lowptGsftracks"))),
   pfElectronsToken_(consumes<vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("pfElectrons"))),
   muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
-  jetsToken_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>  ("jets"))),
-  metToken_(consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("met"))),
 // photonToken_(consumes<std::vector<pat::Photon>>(iConfig.getParameter<edm::InputTag>("photons"))),
   PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
   LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
@@ -321,16 +316,6 @@ ParkingNtupleMakerT<T1>::~ParkingNtupleMakerT()
 
 // ------------ method called for each event  ------------
 
-template<typename T1> 
-float ParkingNtupleMakerT<T1>::Dphi(float phi1,float phi2){
-float result = phi1 - phi2;
- while (result > float(M_PI)) result -= float(2*M_PI);
-    while (result <= -float(M_PI)) result += float(2*M_PI);
-return result;
-
-}
-
-
 
 template<typename T1> 
 std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<reco::TransientTrack> ttks) {
@@ -399,12 +384,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   iEvent.getByToken(electronsToken_, electrons); 
   edm::Handle<std::vector<pat::Electron>> lowpte;
   iEvent.getByToken(lowPtElectronsToken_,lowpte);
-  edm::Handle<std::vector<pat::Jet>> jets;
-  iEvent.getByToken(jetsToken_, jets);
   edm::Handle<std::vector<pat::Muon>> muons;
   iEvent.getByToken(muonsToken_,muons);
-  edm::Handle<std::vector<pat::MET>> met;
-  iEvent.getByToken(metToken_,met);
   edm::Handle<vector<pat::PackedCandidate>> tracks1;
   iEvent.getByToken(PFCands_, tracks1);
   edm::Handle<vector<pat::PackedCandidate>> tracks2;
@@ -478,23 +459,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
 //   const pat::MET &theMet = met->front();
 //   nt.ptmet=theMet.et(); nt.phimet=theMet.phi();
 // 
-//   for (const pat::Jet &jet : *jets){
-//     if (fabs(jet.eta())>2.5) continue;
-//     nt.jet_pt.push_back(jet.pt()); nt.jet_eta.push_back(jet.eta());
-//     nt.jet_phi.push_back(jet.phi());
-//     nt.jet_cEmEF.push_back(jet.chargedEmEnergyFraction());
-//     nt.jet_cHEF.push_back(jet.chargedHadronEnergyFraction());
-//     nt.jet_cHMult.push_back(jet.chargedHadronMultiplicity());
-//     nt.jet_cMuEF.push_back(jet.chargedMuEnergyFraction());
-//     nt.jet_cMult.push_back(jet.chargedMultiplicity());
-//     nt.jet_MuEF.push_back(jet.muonEnergyFraction());
-//     nt.jet_eEF.push_back(jet.electronEnergyFraction());
-//     nt.jet_nEmEF.push_back(jet.neutralEmEnergyFraction());
-//     nt.jet_nHEF.push_back(jet.neutralHadronEnergyFraction());
-//     nt.jet_nMult.push_back(jet.neutralMultiplicity());
-//     nt.jet_pEF.push_back(jet.photonEnergyFraction());
-//     nt.njets++;
-//   }
 
    std::pair<float,float> EtaPhiE1(-10,-10),EtaPhiE2(-10,-10),EtaPhiK(-10,-10);
    if(! iEvent.isRealData() ){
