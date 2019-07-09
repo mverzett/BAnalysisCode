@@ -324,11 +324,10 @@ ParkingNtupleMakerT<T1>::~ParkingNtupleMakerT()
 
 template<typename T1> 
 float ParkingNtupleMakerT<T1>::Dphi(float phi1,float phi2){
-float result = phi1 - phi2;
- while (result > float(M_PI)) result -= float(2*M_PI);
-    while (result <= -float(M_PI)) result += float(2*M_PI);
-return result;
-
+  float result = phi1 - phi2;
+  while (result > float(M_PI)) result -= float(2*M_PI);
+  while (result <= -float(M_PI)) result += float(2*M_PI);
+  return result;
 }
 
 template<typename T1> 
@@ -343,7 +342,10 @@ std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<r
   std::vector<std::vector<float>> dca;
   std::vector<float> def;
   def.push_back(-9999999);
-  if(ttks.size()<2) {dca.push_back(def); return dca; }
+  if(ttks.size()<2) {
+    dca.push_back(def);
+    return dca;
+  }
   for(unsigned int tk1=0; tk1<ttks.size(); tk1++){
     TrajectoryStateClosestToPoint mu1TS = ttks[tk1].impactPointTSCP();
     std::vector<float> temp1;
@@ -351,7 +353,7 @@ std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<r
       TrajectoryStateClosestToPoint mu2TS = ttks[tk2].impactPointTSCP();      
       if (mu1TS.isValid() && mu2TS.isValid()) {
         ClosestApproachInRPhi cdca;
-	    cdca.calculate(mu1TS.theState(), mu2TS.theState());
+      cdca.calculate(mu1TS.theState(), mu2TS.theState());
         if (cdca.status()) temp1.push_back(cdca.distance());
         else temp1.push_back(-999999999);
       }
@@ -376,14 +378,18 @@ ParkingNtupleMakerT<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco:
     reco::TransientTrack* Track2= &refited[1];
     traj1.reset(new TrajectoryStateClosestToPoint(Track1->trajectoryStateClosestToPoint(vtxPos)));
     traj2.reset(new TrajectoryStateClosestToPoint(Track2->trajectoryStateClosestToPoint(vtxPos)));    
-    gvmu1=traj1->momentum();  gvmu2=traj2->momentum(); 
+    gvmu1=traj1->momentum();
+    gvmu2=traj2->momentum();
   }         
   else {
     traj1.reset(new TrajectoryStateClosestToPoint(tracks[0].trajectoryStateClosestToPoint(vtxPos)));
     traj2.reset(new TrajectoryStateClosestToPoint(tracks[1].trajectoryStateClosestToPoint(vtxPos)));
-    gvmu1=traj1->momentum();  gvmu2=traj2->momentum();
+    gvmu1=traj1->momentum();
+    gvmu2=traj2->momentum();
   }                       
-  std::vector<GlobalVector> gvmu; gvmu.push_back(gvmu1); gvmu.push_back(gvmu2);
+  std::vector<GlobalVector> gvmu;
+  gvmu.push_back(gvmu1);
+  gvmu.push_back(gvmu2);
   return gvmu;
 }
 
@@ -440,27 +446,44 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       for (auto const & keyval: menu->getAlgorithmMap()) {
         std::string const & trigName  = keyval.second.getName();
         unsigned int index = keyval.second.getIndex();  
-        int itrig = index; algoBitToName[itrig] = TString( trigName );
+        int itrig = index;
+        algoBitToName[itrig] = TString( trigName );
       }
       count++;
     }
   }
   //clear
-  footprint.clear(); nt.ClearVariables(); PFe_EtaPhi.clear(); ettks.clear();
-  muttks.clear(); KTrack.clear(); KTrack_index.clear(); tracks.clear();
-  muTrack1.clear(); muTrack2.clear(); used_muTrack_index.clear();
-  used_eTrack_index.clear(); muPfTrack1.clear(); muPfTrack2.clear();
+  footprint.clear();
+  nt.ClearVariables();
+  PFe_EtaPhi.clear();
+  ettks.clear();
+  muttks.clear();
+  KTrack.clear();
+  KTrack_index.clear();
+  tracks.clear();
+  muTrack1.clear();
+  muTrack2.clear();
+  used_muTrack_index.clear();
+  used_eTrack_index.clear();
+  muPfTrack1.clear();
+  muPfTrack2.clear();
   used_muTrack_pfTrack_index.clear();
-  nmupairs=0; TrgmuDz=0; DRtrgMu=100;
+  nmupairs=0;
+  TrgmuDz=0;
+  DRtrgMu=100;
   
   // per-event quantities
   nt.event=iEvent.id().event();
   nt.run_number=iEvent.id().run();
   nt.ls=iEvent.luminosityBlock();
-  nt.beam_x=theBeamSpot->x0(); nt.beam_y=theBeamSpot->y0(); 
-  nt.beam_z=theBeamSpot->z0(); nt.beam_ex= theBeamSpot->x0Error(); 
-  nt.beam_ey= theBeamSpot->y0Error(); nt.beam_ez= theBeamSpot->z0Error();
-  float beam_xz=theBeamSpot->dxdz(); float beam_yz =theBeamSpot->dydz();
+  nt.beam_x=theBeamSpot->x0();
+  nt.beam_y=theBeamSpot->y0();
+  nt.beam_z=theBeamSpot->z0();
+  nt.beam_ex= theBeamSpot->x0Error();
+  nt.beam_ey= theBeamSpot->y0Error();
+  nt.beam_ez= theBeamSpot->z0Error();
+  float beam_xz=theBeamSpot->dxdz();
+  float beam_yz =theBeamSpot->dydz();
   const  reco::Vertex firstGoodVertex=vertices->front();
   int firstGoodVertexIdx = 0;
   for (const reco::Vertex &vtx : *vertices) {
@@ -468,13 +491,21 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     if ( isFake || !vtx.isValid() ) continue;
     if (firstGoodVertexIdx==0){
       firstGoodVertexIdx=1; 
-      nt.pvertex_x=vtx.x(); nt.pvertex_y=vtx.y(); nt.pvertex_z=vtx.z();
-      nt.pvertex_ex=vtx.xError(); nt.pvertex_ey=vtx.yError(); nt.pvertex_ez=vtx.zError();
+      nt.pvertex_x=vtx.x();
+      nt.pvertex_y=vtx.y();
+      nt.pvertex_z=vtx.z();
+      nt.pvertex_ex=vtx.xError();
+      nt.pvertex_ey=vtx.yError();
+      nt.pvertex_ez=vtx.zError();
     }
-    nt.vertex_x.push_back(vtx.x()); nt.vertex_y.push_back(vtx.y()); 
-    nt.vertex_z.push_back(vtx.z()); nt.vertex_ex.push_back(vtx.xError());
-    nt.vertex_ey.push_back(vtx.yError()); nt.vertex_ez.push_back(vtx.zError());
-    nt.vertex_chi.push_back(vtx.chi2()); nt.vertex_ndof.push_back(vtx.ndof());
+    nt.vertex_x.push_back(vtx.x());
+    nt.vertex_y.push_back(vtx.y());
+    nt.vertex_z.push_back(vtx.z());
+    nt.vertex_ex.push_back(vtx.xError());
+    nt.vertex_ey.push_back(vtx.yError());
+    nt.vertex_ez.push_back(vtx.zError());
+    nt.vertex_chi.push_back(vtx.chi2());
+    nt.vertex_ndof.push_back(vtx.ndof());
   }
 
   vertex_point.SetCoordinates(nt.pvertex_x,nt.pvertex_y,nt.pvertex_z);
@@ -508,7 +539,9 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
      gen.Fill(nt);
      if (UseDirectlyGenBeeK){
        gen.GenKLepLepEtaPhi(IsResonantDecayToMatch,BpdgIdToMatch,LepIdToMatch,KIdToMatch);
-       EtaPhiK=gen.EtaPhiK(); EtaPhiE1=gen.EtaPhiL(); EtaPhiE2=gen.EtaPhiaL();
+       EtaPhiK=gen.EtaPhiK();
+       EtaPhiE1=gen.EtaPhiL();
+       EtaPhiE2=gen.EtaPhiaL();
      }
    }
    if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) return;
@@ -522,12 +555,15 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     HLTL1tree trigger(iEvent, l1resultToken_, l1MuonsToken_, l1JetsToken_, l1MetToken_, trgresultsToken_, trigobjectsToken_);
     if (saveL1){ 
       trigger.L1objetcs(nt);
-      trigger.L1trigger(algoBitToName,Seed_); trigger.FillL1(nt);
+      trigger.L1trigger(algoBitToName,Seed_);
+      trigger.FillL1(nt);
     }
     if (saveHLT){
-      trigger.HLTtrigger(HLTPath_); trigger.HLTobjects(HLTPath_);
+      trigger.HLTtrigger(HLTPath_);
+      trigger.HLTobjects(HLTPath_);
       if (saveOnlyHLTFires && !trigger.HLTPathFire()) return;
-      trigger.FillHLT(nt); trigger.FillObj(nt);
+      trigger.FillHLT(nt);
+      trigger.FillObj(nt);
       if (trigger.HLTPathFire())
         TrgMu_EtaPhi=std::make_pair(trigger.GetHighestPtHLTObject()[1],trigger.GetHighestPtHLTObject()[2]);
     }
@@ -540,8 +576,10 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     // for (unsigned int i=0, n=mu.numberOfSourceCandidatePtrs(); i<n; ++i){
      //   footprint.push_back(mu.sourceCandidatePtr(i));
    // }
-    nt.muon_pt.push_back(mu.pt()); nt.muon_phi.push_back(mu.phi());
-    nt.muon_eta.push_back(mu.eta()); nt.muon_charge.push_back(mu.charge());
+    nt.muon_pt.push_back(mu.pt());
+    nt.muon_phi.push_back(mu.phi());
+    nt.muon_eta.push_back(mu.eta());
+    nt.muon_charge.push_back(mu.charge());
     nt.muon_global_flag.push_back(mu.isGlobalMuon());
     nt.muon_standalone_flag.push_back(mu.isStandAloneMuon());
     nt.muon_tracker_flag.push_back(mu.isTrackerMuon());
@@ -594,7 +632,9 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
         nt.el_mva_unbiased.push_back((*ele_mva_wp_unbiased)[seed]);   
     } 
     else{
-        pt=el.pt(); eta=el.eta(); phi=el.phi();
+        pt=el.pt();
+        eta=el.eta();
+        phi=el.phi();
         if (pt<Electron2PtCut) continue;
         nt.el_mva_out.push_back(el.mva_e_pi());
         nt.el_mva_iso.push_back(el.mva_Isolated());
@@ -604,18 +644,25 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
         nt.el_medium.push_back((*ele_medium_id)[elePtr]);
         nt.el_tight.push_back((*ele_tight_id)[elePtr]);
         nt.el_mva_map_value.push_back((*ele_mva_id_value)[elePtr]);
-        nt.el_mva_biased.push_back(-10); nt.el_mva_unbiased.push_back(-10); 
+        nt.el_mva_biased.push_back(-10);
+        nt.el_mva_unbiased.push_back(-10); 
     }
-    nt.el_pt.push_back(pt); nt.el_eta.push_back(eta);
-    nt.el_phi.push_back(phi); nt.el_charge.push_back(el.charge());
+    nt.el_pt.push_back(pt);
+    nt.el_eta.push_back(eta);
+    nt.el_phi.push_back(phi);
+    nt.el_charge.push_back(el.charge());
     nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
     nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
-    nt.el_edxy.push_back(el.dxyError()); nt.el_edz.push_back(el.dzError());
-    nt.el_vx.push_back(el.vx()); nt.el_vy.push_back(el.vy());
+    nt.el_edxy.push_back(el.dxyError());
+    nt.el_edz.push_back(el.dzError());
+    nt.el_vx.push_back(el.vx());
+    nt.el_vy.push_back(el.vy());
     nt.el_vz.push_back(el.vz());
     double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
-    nt.el_iso.push_back(iso); nt.el_islowpt.push_back(IsLowpTE);
-    nt.el_trkpt.push_back(el.bestTrack()->pt()); nt.el_trketa.push_back(el.bestTrack()->eta());
+    nt.el_iso.push_back(iso);
+    nt.el_islowpt.push_back(IsLowpTE);
+    nt.el_trkpt.push_back(el.bestTrack()->pt());
+    nt.el_trketa.push_back(el.bestTrack()->eta());
     nt.el_trkphi.push_back(el.bestTrack()->phi()); 
     ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
     nt.nel++;
@@ -632,7 +679,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
        if (!el.passConversionVeto()) continue;
        reco::GsfTrackRef seed = el.gsfTrack();
        if ( seed.isNull() ) continue;
-       pt=el.gsfTrack()->ptMode(); eta=el.gsfTrack()->etaMode();
+       pt=el.gsfTrack()->ptMode();
+       eta=el.gsfTrack()->etaMode();
        phi=el.gsfTrack()->phiMode();
        if (pt<Electron2PtCut) continue;
        if ( (*ele_mva_wp_unbiased)[seed]<MVAEl2Cut) continue;
@@ -644,18 +692,23 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
        if (Elsaved) continue;
        nt.el_mva_biased.emplace_back((*ele_mva_wp_biased)[seed]);
        nt.el_mva_unbiased.emplace_back((*ele_mva_wp_unbiased)[seed]);         
-       nt.el_pt.push_back(pt); nt.el_eta.push_back(eta);
-       nt.el_phi.push_back(phi); nt.el_charge.push_back(el.charge());
+       nt.el_pt.push_back(pt);
+       nt.el_eta.push_back(eta);
+       nt.el_phi.push_back(phi);
+       nt.el_charge.push_back(el.charge());
        nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
        nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
-       nt.el_edxy.push_back(el.dxyError()); nt.el_edz.push_back(el.dzError());
-       nt.el_vx.push_back(el.vx()); nt.el_vy.push_back(el.vy());
+       nt.el_edxy.push_back(el.dxyError());
+       nt.el_edz.push_back(el.dzError());
+       nt.el_vx.push_back(el.vx());
+       nt.el_vy.push_back(el.vy());
        nt.el_vz.push_back(el.vz());
        double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
-       nt.el_iso.push_back(iso); nt.el_islowpt.push_back(true);
+       nt.el_iso.push_back(iso);
+       nt.el_islowpt.push_back(true);
        nt.el_trkpt.emplace_back(el.bestTrack()->pt());
        nt.el_trketa.emplace_back(el.bestTrack()->eta());
-       nt.el_trkphi.emplace_back(el.bestTrack()->phi()); 
+       nt.el_trkphi.emplace_back(el.bestTrack()->phi());
        // add low pt ele to same collection of pf ele for this event
        ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
 
@@ -709,7 +762,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       if (UseDirectlyGenBeeK){
         if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
       } 
-      bool isMu=false; bool isE=false;
+      bool isMu=false;
+      bool isE=false;
       for (const pat::Muon & mu :*muons){
         if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
       }
@@ -721,8 +775,10 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       }
      
       if(isMu || isE ) continue;
-      nt.track_pt.push_back(trk.pt()); nt.track_eta.push_back(trk.eta());
-      nt.track_phi.push_back(trk.phi()); nt.track_charge.push_back(trk.charge());
+      nt.track_pt.push_back(trk.pt());
+      nt.track_eta.push_back(trk.eta());
+      nt.track_phi.push_back(trk.phi());
+      nt.track_charge.push_back(trk.charge());
      
       if(trk.trackHighPurity()) nt.track_highPurity.push_back(1);
       else nt.track_highPurity.push_back(0);
@@ -732,7 +788,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       nt.track_dz.push_back(trk.dz(vertex_point));
       nt.track_validhits.push_back(trk.numberOfHits());
       nt.track_losthits.push_back(trk.lostInnerHits());
-      nt.track_fromPV.push_back(trk.fromPV()); nt.ntracks++;  
+      nt.track_fromPV.push_back(trk.fromPV());
+      nt.ntracks++; 
     }
   }//save tracks
 
@@ -849,7 +906,7 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
       if (UseDirectlyGenBeeK){
         if (DR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
-   	      continue;
+           continue;
       }
       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
       bool isMu = false; 
