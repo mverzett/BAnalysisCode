@@ -87,16 +87,11 @@ using namespace std;
 // from  edm::one::EDAnalyzer<> and also remove the line from
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
-template<typename T1>
-class ParkingNtupleMakerT : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
-
-  typedef std::vector<T1> T1Collection;
-  typedef edm::Ref<T1Collection> T1Ref;
-  typedef edm::AssociationMap<edm::OneToValue<std::vector<T1>, float > > T1IsolationMap;
+class ParkingNtupleMaker : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
 public:
-  explicit ParkingNtupleMakerT(const edm::ParameterSet&);
-  ~ParkingNtupleMakerT();
+  explicit ParkingNtupleMaker(const edm::ParameterSet&);
+  ~ParkingNtupleMaker();
   
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   
@@ -112,23 +107,13 @@ private:
 
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
-  edm::EDGetToken electronsToken_;
-  edm::EDGetToken lowPtElectronsToken_;
-  edm::EDGetToken lowPtGsfTracksToken_;
-  edm::EDGetToken pfElectronsToken_;
+  edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
   edm::EDGetToken muonsToken_;
   edm::EDGetToken jetsToken_;
   edm::EDGetToken metToken_;
 //  edm::EDGetToken photonToken_;
   edm::EDGetToken PFCands_;
   edm::EDGetToken LostTracks_;
-  edm::EDGetTokenT<edm::ValueMap<bool> > eleIdMapVetoToken_;
-  edm::EDGetTokenT<edm::ValueMap<bool> > eleIdMapSoftToken_;
-  edm::EDGetTokenT<edm::ValueMap<bool> > eleIdMapMediumToken_;
-  edm::EDGetTokenT<edm::ValueMap<bool> > eleIdMapTightToken_;
-  edm::EDGetTokenT<edm::ValueMap<int> > elIdMapValueToken_;
-  edm::EDGetTokenT<edm::ValueMap<float> > eleBWPToken_;
-  edm::EDGetTokenT<edm::ValueMap<float> > eleUnBWPToken_;
   edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
   edm::EDGetToken l1JetsToken_;
@@ -200,7 +185,6 @@ private:
   double DzeeMaxCut=1000; 
   double PtBminCut=0;
   //internal
-  std::vector<std::pair<float,float>> PFe_EtaPhi;
   std::vector<reco::TransientTrack> KTrack;
   std::vector<unsigned int> KTrack_index;
   unsigned int nmupairs=0; 
@@ -221,14 +205,10 @@ private:
 
 // constructors and destructor
 //
-template<typename T1>
-ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig): 
+ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig): 
   beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))),
   vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
   electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
-  lowPtElectronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("lowptElectrons"))),
-  lowPtGsfTracksToken_(consumes<vector<reco::GsfTrack>>(iConfig.getParameter<edm::InputTag>  ("lowptGsftracks"))),
-  pfElectronsToken_(consumes<vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("pfElectrons"))),
   muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
   jetsToken_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>  ("jets"))),
   metToken_(consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("met"))),
@@ -236,13 +216,6 @@ ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig):
   PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
   LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
 // Tracks_(consumes<std::vector<reco::Track> >(iConfig.getParameter<edm::InputTag>("tracks"))),
-  eleIdMapVetoToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapVeto"))),
-  eleIdMapSoftToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapSoft"))),
-  eleIdMapMediumToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapMedium"))),
-  eleIdMapTightToken_(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("eleIdMapTight"))),
-  elIdMapValueToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("eleIdMapValue"))),
-  eleBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleBiasedWP"))),
-  eleUnBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleUnbiasedWP"))),
   l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
   l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
   l1JetsToken_(consumes<l1t::JetBxCollection>(iConfig.getParameter<edm::InputTag>("l1jets"))),
@@ -308,8 +281,7 @@ ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig):
   PtBminCut=runParameters.getParameter<double>("PtBminCut");
 }
 
-template<typename T1>
-ParkingNtupleMakerT<T1>::~ParkingNtupleMakerT()
+ParkingNtupleMaker::~ParkingNtupleMaker()
 {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
@@ -322,23 +294,20 @@ ParkingNtupleMakerT<T1>::~ParkingNtupleMakerT()
 
 // ------------ method called for each event  ------------
 
-template<typename T1> 
-float ParkingNtupleMakerT<T1>::Dphi(float phi1,float phi2){
+float ParkingNtupleMaker::Dphi(float phi1,float phi2){
   float result = phi1 - phi2;
   while (result > float(M_PI)) result -= float(2*M_PI);
   while (result <= -float(M_PI)) result += float(2*M_PI);
   return result;
 }
 
-template<typename T1> 
-float ParkingNtupleMakerT<T1>::DR(float eta1,float phi1,float eta2, float phi2){
+float ParkingNtupleMaker::DR(float eta1,float phi1,float eta2, float phi2){
   return TMath::Sqrt((eta1-eta2)*(eta1-eta2)+Dphi(phi1,phi2)*Dphi(phi1,phi2));
 }
 
 
 
-template<typename T1> 
-std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<reco::TransientTrack> ttks) {
+std::vector<std::vector<float>> ParkingNtupleMaker::track_DCA(std::vector<reco::TransientTrack> ttks) {
   std::vector<std::vector<float>> dca;
   std::vector<float> def;
   def.push_back(-9999999);
@@ -364,9 +333,8 @@ std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<r
   return dca;
 }
 
-template<typename T1>
 std::vector<GlobalVector>
-ParkingNtupleMakerT<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks){
+ParkingNtupleMaker::refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks){
   std::auto_ptr<TrajectoryStateClosestToPoint> traj1;
   std::auto_ptr<TrajectoryStateClosestToPoint> traj2;
   GlobalPoint vtxPos(myVertex.position().x(), myVertex.position().y(), myVertex.position().z());
@@ -393,9 +361,8 @@ ParkingNtupleMakerT<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco:
   return gvmu;
 }
 
-template<typename T1>
 void
-ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   using namespace std;
@@ -409,8 +376,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   if (vertices->size()==0) return;
   edm::Handle<std::vector<pat::Electron>> electrons;
   iEvent.getByToken(electronsToken_, electrons); 
-  edm::Handle<std::vector<pat::Electron>> lowpte;
-  iEvent.getByToken(lowPtElectronsToken_,lowpte);
   edm::Handle<std::vector<pat::Jet>> jets;
   iEvent.getByToken(jetsToken_, jets);
   edm::Handle<std::vector<pat::Muon>> muons;
@@ -421,20 +386,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   iEvent.getByToken(PFCands_, tracks1);
   edm::Handle<vector<pat::PackedCandidate>> tracks2;
   iEvent.getByToken(LostTracks_, tracks2);
-  edm::Handle<edm::ValueMap<bool> > ele_veto_id;
-  iEvent.getByToken(eleIdMapVetoToken_ ,ele_veto_id);
-  edm::Handle<edm::ValueMap<bool> > ele_soft_id;
-  iEvent.getByToken(eleIdMapSoftToken_ ,ele_soft_id);
-  edm::Handle<edm::ValueMap<bool> > ele_medium_id;
-  iEvent.getByToken(eleIdMapMediumToken_ ,ele_medium_id);
-  edm::Handle<edm::ValueMap<bool> > ele_tight_id;
-  iEvent.getByToken(eleIdMapTightToken_ ,ele_tight_id);
-  edm::Handle<edm::ValueMap<int> > ele_mva_id_value;
-  iEvent.getByToken( elIdMapValueToken_ ,ele_mva_id_value);
-  edm::Handle<edm::ValueMap<float> > ele_mva_wp_biased;
-  iEvent.getByToken( eleBWPToken_ ,ele_mva_wp_biased);
-  edm::Handle<edm::ValueMap<float> > ele_mva_wp_unbiased;
-  iEvent.getByToken( eleUnBWPToken_ ,ele_mva_wp_unbiased);
   edm::ESHandle<MagneticField> bFieldHandle;
   iSetup.get<IdealMagneticFieldRecord>().get(bFieldHandle);
   edm::Handle<GlobalAlgBlkBxCollection> l1result;
@@ -455,7 +406,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   //clear
   footprint.clear();
   nt.ClearVariables();
-  PFe_EtaPhi.clear();
   ettks.clear();
   muttks.clear();
   KTrack.clear();
@@ -617,39 +567,20 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   trigger::size_type eindex=-1; 
   for(const pat::Electron &el : *electrons){
     eindex++;
-    float pt=0,eta=-30,phi=-30;
-    if (fabs(TrgmuDz-el.vz())>ElectronDzCut) continue;
-    if (!el.passConversionVeto()) continue;
-    if (IsLowpTE){
-        reco::GsfTrackRef seed = el.gsfTrack();
-        if ( seed.isNull() ) continue;
-        pt  = el.gsfTrack()->ptMode(); 
-        eta = el.gsfTrack()->etaMode();
-        phi = el.gsfTrack()->phiMode();
-        if (pt<Electron2PtCut) continue;
-        if ( (*ele_mva_wp_unbiased)[seed]<MVAEl2Cut) continue;
-        nt.el_mva_biased.push_back((*ele_mva_wp_biased)[seed]);
-        nt.el_mva_unbiased.push_back((*ele_mva_wp_unbiased)[seed]);   
-    } 
-    else{
-        pt=el.pt();
-        eta=el.eta();
-        phi=el.phi();
-        if (pt<Electron2PtCut) continue;
-        nt.el_mva_out.push_back(el.mva_e_pi());
-        nt.el_mva_iso.push_back(el.mva_Isolated());
-        const edm::Ptr<pat::Electron> elePtr(electrons,eindex);
-        nt.el_veto.push_back((*ele_veto_id)[elePtr]);
-        nt.el_soft.push_back((*ele_soft_id)[elePtr]);
-        nt.el_medium.push_back((*ele_medium_id)[elePtr]);
-        nt.el_tight.push_back((*ele_tight_id)[elePtr]);
-        nt.el_mva_map_value.push_back((*ele_mva_id_value)[elePtr]);
-        nt.el_mva_biased.push_back(-10);
-        nt.el_mva_unbiased.push_back(-10); 
-    }
+    if(fabs(TrgmuDz - el.vz()) > ElectronDzCut) continue;
+    if(!el.passConversionVeto()) continue;
+    bool is_lowpt = el.userInt("isLowPt");
+    float pt = is_lowpt ? el.gsfTrack()->ptMode()  : el.pt();
     nt.el_pt.push_back(pt);
-    nt.el_eta.push_back(eta);
-    nt.el_phi.push_back(phi);
+    nt.el_eta.push_back(is_lowpt ? el.gsfTrack()->etaMode() : el.eta());
+    nt.el_phi.push_back(is_lowpt ? el.gsfTrack()->phiMode() : el.phi());
+    nt.el_mva_biased.push_back(is_lowpt ? el.electronID("biased_seed") : -10);
+    nt.el_mva_unbiased.push_back(is_lowpt ? el.electronID("unbiased_seed") : -10);
+    nt.el_veto.push_back(  is_lowpt ? -10 : el.electronID("cutBasedElectronID-Fall17-94X-V2-veto"));
+    nt.el_soft.push_back(  is_lowpt ? -10 : el.electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
+    nt.el_medium.push_back(is_lowpt ? -10 : el.electronID("mvaEleID-Fall17-noIso-V2-wp90"));
+    nt.el_tight.push_back( is_lowpt ? -10 : el.electronID("mvaEleID-Fall17-noIso-V2-wp80"));
+    nt.el_mva_map_value.push_back(-10);
     nt.el_charge.push_back(el.charge());
     nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
     nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
@@ -660,85 +591,14 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     nt.el_vz.push_back(el.vz());
     double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
     nt.el_iso.push_back(iso);
-    nt.el_islowpt.push_back(IsLowpTE);
+    nt.el_islowpt.push_back(is_lowpt);
     nt.el_trkpt.push_back(el.bestTrack()->pt());
     nt.el_trketa.push_back(el.bestTrack()->eta());
     nt.el_trkphi.push_back(el.bestTrack()->phi()); 
     ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
     nt.nel++;
-    if (CombineElCol)  PFe_EtaPhi.emplace_back(eta,phi);
   }
-
    
-  //save low pt electrons
-  if (CombineElCol){
-    for(const pat::Electron &el : *lowpte)
-    {
-       float pt=0,eta=-30,phi=-30;
-       if (fabs(TrgmuDz-el.vz())>ElectronDzCut) continue;
-       if (!el.passConversionVeto()) continue;
-       reco::GsfTrackRef seed = el.gsfTrack();
-       if ( seed.isNull() ) continue;
-       pt=el.gsfTrack()->ptMode();
-       eta=el.gsfTrack()->etaMode();
-       phi=el.gsfTrack()->phiMode();
-       if (pt<Electron2PtCut) continue;
-       if ( (*ele_mva_wp_unbiased)[seed]<MVAEl2Cut) continue;
-       bool Elsaved=false;
-       for (std::pair<float,float> & pfe : PFe_EtaPhi){
-         if (DR(pfe.first,pfe.second,eta,phi)<CombineCone)
-           Elsaved=true;
-       }
-       if (Elsaved) continue;
-       nt.el_mva_biased.emplace_back((*ele_mva_wp_biased)[seed]);
-       nt.el_mva_unbiased.emplace_back((*ele_mva_wp_unbiased)[seed]);         
-       nt.el_pt.push_back(pt);
-       nt.el_eta.push_back(eta);
-       nt.el_phi.push_back(phi);
-       nt.el_charge.push_back(el.charge());
-       nt.el_dz.emplace_back(el.bestTrack()->dz(vertex_point));
-       nt.el_dxy.emplace_back(el.bestTrack()->dxy(vertex_point));
-       nt.el_edxy.push_back(el.dxyError());
-       nt.el_edz.push_back(el.dzError());
-       nt.el_vx.push_back(el.vx());
-       nt.el_vy.push_back(el.vy());
-       nt.el_vz.push_back(el.vz());
-       double iso= el.pfIsolationVariables().sumChargedHadronPt+max(0.0,el.pfIsolationVariables().sumNeutralHadronEt+el.pfIsolationVariables().sumPhotonEt-0.5*el.pfIsolationVariables().sumPUPt)/pt;
-       nt.el_iso.push_back(iso);
-       nt.el_islowpt.push_back(true);
-       nt.el_trkpt.emplace_back(el.bestTrack()->pt());
-       nt.el_trketa.emplace_back(el.bestTrack()->eta());
-       nt.el_trkphi.emplace_back(el.bestTrack()->phi());
-       // add low pt ele to same collection of pf ele for this event
-       ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
-
-       nt.nel++;
-    }
-  }    
-  //additional low pt el for combination
-  if (AddLowPtElAsCol && AddLowPtGsfTrkAsCol){
-      LowPtElObjects lowelpt(lowPtElectronsToken_,lowPtGsfTracksToken_,eleUnBWPToken_,iEvent); 
-      lowelpt.AddElectrons(nt);  
-      lowelpt.AddGsfTracks(nt);
-  } 
-  else if (AddLowPtElAsCol){
-      LowPtElObjects lowelpt(lowPtElectronsToken_,eleUnBWPToken_,iEvent); 
-      lowelpt.AddElectrons(nt);
-  } 
-  else if (AddLowPtGsfTrkAsCol){
-      LowPtElObjects lowelpt(lowPtElectronsToken_,lowPtGsfTracksToken_,eleUnBWPToken_,iEvent); 
-      lowelpt.AddGsfTracks(nt);
-  }
-
-  //add PF as collection
-  if (AddPFElAsCol){
-      PFelCollection PFelectrons(pfElectronsToken_,eleIdMapSoftToken_,eleIdMapMediumToken_,eleIdMapTightToken_,iEvent);
-      PFelectrons.AddElectrons(nt);
-  }
-    /*  std::vector<std::vector<float>> mu_DCA=track_DCA(muttks);
-  if (mu_DCA.size()==0) { std::vector<float> d1; d1.push_back(-99); muon_DCA.push_back(d1); }
-  else muon_DCA=mu_DCA;*/
-
   //save tracks
   for (const pat::PackedCandidate &trk : *tracks1) {
     if (!trk.trackHighPurity()) continue;
@@ -998,9 +858,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
 
 
 // ------------ method called once each job just before starting event loop  ------------
-template<typename T1>
 void 
-ParkingNtupleMakerT<T1>::beginJob()
+ParkingNtupleMaker::beginJob()
 {
   t1=fs->make<TTree>("mytree","mytree");
   
@@ -1022,9 +881,8 @@ ParkingNtupleMakerT<T1>::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-template<typename T1>
 void 
-ParkingNtupleMakerT<T1>::endJob() 
+ParkingNtupleMaker::endJob() 
 {
   std::cout<<"Processed "<<nevts<<std::endl;
   if (NtupleOutputClasses=="flat"){
@@ -1064,9 +922,8 @@ ParkingNtupleMakerT<T1>::endJob()
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-template<typename T1>
 void
-ParkingNtupleMakerT<T1>::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+ParkingNtupleMaker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -1075,5 +932,4 @@ ParkingNtupleMakerT<T1>::fillDescriptions(edm::ConfigurationDescriptions& descri
 }
 
 //define this as a plug-in
-typedef ParkingNtupleMakerT<reco::RecoEcalCandidate> ParkingNtupleMaker;
 DEFINE_FWK_MODULE(ParkingNtupleMaker);

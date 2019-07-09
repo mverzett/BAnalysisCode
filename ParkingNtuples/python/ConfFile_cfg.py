@@ -1,12 +1,21 @@
 import FWCore.ParameterSet.Config as cms
 #quick config
 
+selections = cms.PSet(
+  electrons = cms.PSet(
+    low_pt_collection = cms.InputTag('slimmedLowPtElectrons'),
+    low_pt_selection = cms.string('abs(eta) < 2.5 && electronID("unbiased_seed") > -4'),
+    pf_collection = cms.InputTag('slimmedElectrons'),
+    pf_selection = cms.string("abs(eta) < 2.5"),
+    cross_cleaning_code = cms.double(0.03),
+  )
+)
 
 IsData=True
-Run="A"
-Nentries=1000;  
+Run="B"
+Nentries=100;  
 output="output_flat.root"; 
-mlog=100; 
+mlog=10; 
 saveTrk=False; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
 
@@ -36,7 +45,8 @@ Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
 # '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
 #'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
-'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+#'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root'
 ]
 ############ for debug evt 1242 run 1 ls 13
  #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
@@ -145,33 +155,36 @@ process.source = cms.Source("PoolSource",
 #taskB0.add(process.selectedPFCandidatesHP)
 
 
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-dataFormat = DataFormat.MiniAOD
-switchOnVIDElectronIdProducer(process, dataFormat)
-my_id_modules = [
-        'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff', 
- 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff', 
-]
-for idmod in my_id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+## NO NEED!
+## from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+## dataFormat = DataFormat.MiniAOD
+## switchOnVIDElectronIdProducer(process, dataFormat)
+## my_id_modules = [
+##         'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff', 
+##  'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff', 
+## ]
+## for idmod in my_id_modules:
+##     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
+process.ntuplesSeq = cms.Sequence(
+  #process.egmGsfElectronIDSequence
+)
+
+process.load('BAnalysisCode/ParkingNtuples/electrons_cfi')
+process.lowptElectronsWithSeed.src = selections.electrons.low_pt_collection
+process.lowptElectronsForAnalysis.cut = selections.electrons.low_pt_selection
+process.pfElectronsForAnalysis.src = selections.electrons.pf_collection
+process.pfElectronsForAnalysis.cut = selections.electrons.pf_selection
+process.electronsForAnalysis.drForCleaning = selections.electrons.cross_cleaning_code
+
+process.ntuplesSeq *= process.electrons
 
 process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
-                              electrons      = cms.InputTag(electron_container),
-                              lowptElectrons = cms.InputTag(electron_container2),
-                              lowptGsftracks = cms.InputTag("lowPtGsfEleGsfTracks"),
-                              pfElectrons    = cms.InputTag("slimmedElectrons"),
+                              electrons      = cms.InputTag('electronsForAnalysis'),
                               vertices       = cms.InputTag("offlineSlimmedPrimaryVertices"),
                               jets           = cms.InputTag("slimmedJets"),
                               photons        = cms.InputTag("slimmedPhotons"),
-                              eleIdMapVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                              eleIdMapSoft   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose"),
-                              eleIdMapMedium = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp90"),
-                              eleIdMapTight   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp80"),
-                              eleIdMapValue  = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Categories"),
-                              eleBiasedWP    = cms.InputTag("lowPtGsfElectronSeedValueMaps","ptbiased","RECO"),
-                              eleUnbiasedWP  = cms.InputTag("lowPtGsfElectronSeedValueMaps","unbiased","RECO"),
                               #If you want no L1_Seed, write "default" in the first element and the tree will write the value -100
                               Seed           = cms.vstring("L1_SingleMu7er1p5","L1_SingleMu8er1p5","L1_SingleMu9er1p5","L1_SingleMu10er1p5","L1_SingleMu12er1p5","L1_SingleMu22"),
                               HLTPath        = cms.vstring(n1,n2,n3,n4,n5,n6,n7,n8),
@@ -248,6 +261,7 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       NtupleOutputClasses=cms.string(NtupleClasses)
   ),
 )
+process.ntuplesSeq *= process.demo
 
 process.load( "HLTrigger.HLTanalyzers.hlTrigReport_cfi" )
 process.options = cms.untracked.PSet(
@@ -268,8 +282,8 @@ process.fevt = cms.OutputModule("PoolOutputModule",
 
 #process.p = cms.Path(process.egmGsfElectronIDSequence)#* process.demo)
 process.p = cms.Path(
-   process.egmGsfElectronIDSequence   
-   +process.demo
+   #process.egmGsfElectronIDSequence   
+   process.ntuplesSeq
    #+process.hlTrigReport
   
    )
