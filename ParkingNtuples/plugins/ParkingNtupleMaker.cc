@@ -108,7 +108,6 @@ private:
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
   float Dphi(float phi1,float phi2);
-  float DR(float eta1,float phi1,float eta2, float phi2);
 
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
@@ -331,11 +330,6 @@ return result;
 
 }
 
-template<typename T1> 
-float ParkingNtupleMakerT<T1>::DR(float eta1,float phi1,float eta2, float phi2){
-  return TMath::Sqrt((eta1-eta2)*(eta1-eta2)+Dphi(phi1,phi2)*Dphi(phi1,phi2));
-}
-
 
 
 template<typename T1> 
@@ -503,7 +497,7 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
 //   }
 
    std::pair<float,float> EtaPhiE1(-10,-10),EtaPhiE2(-10,-10),EtaPhiK(-10,-10);
-   if(!data){
+   if(! iEvent.isRealData() ){
      GeneratorBTree gen(prunedGenToken_,packedGenToken_,iEvent);
      gen.Fill(nt);
      if (UseDirectlyGenBeeK){
@@ -561,8 +555,8 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     nt.muon_loose.push_back(mu.isLooseMuon());
     nt.muon_tight.push_back(mu.isTightMuon(firstGoodVertex));
     nt.muon_soft.push_back(mu.isSoftMuon(firstGoodVertex));
-    if (DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi())<DRtrgMu){
-      DRtrgMu=DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi());
+    if (deltaR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi())<DRtrgMu){
+      DRtrgMu=deltaR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi());
       TrgmuDz=mu.vz();  
       nt.muon_trgIndex=nt.nmuons;
     }
@@ -638,7 +632,7 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
        if ( (*ele_mva_wp_unbiased)[seed]<MVAEl2Cut) continue;
        bool Elsaved=false;
        for (std::pair<float,float> & pfe : PFe_EtaPhi){
-         if (DR(pfe.first,pfe.second,eta,phi)<CombineCone)
+         if (deltaR(pfe.first,pfe.second,eta,phi)<CombineCone)
            Elsaved=true;
        }
        if (Elsaved) continue;
@@ -707,15 +701,15 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       if (fabs(trk.eta())>EtaTrk_Cut) continue;
       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
       if (UseDirectlyGenBeeK){
-        if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
+        if (deltaR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
       } 
       bool isMu=false; bool isE=false;
       for (const pat::Muon & mu :*muons){
-        if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
+        if (deltaR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
       }
       if (CombineElCol || !IsLowpTE){
         for (const pat::Electron & el : *electrons) {     
-          if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
+          if (deltaR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
             isE=true;
         }
       }
@@ -766,9 +760,9 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   //e pairs
   if(AddeeK || OnlyKee ){
     for(int iel=0; iel<nt.nel; ++iel){
-      if (UseDirectlyGenBeeK && !data){
-        if ( DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
-             DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone) 
+      if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
+        if ( deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
+             deltaR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone) 
              continue;
       }
       for (int iel2=iel+1; iel2<nt.nel; ++iel2){
@@ -776,9 +770,9 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
         if (nt.el_pt[iel2] < Electron1PtCut && \
             nt.el_pt[iel]  < Electron1PtCut) 
             continue;
-        if (UseDirectlyGenBeeK && !data){
-          if (DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
-              DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
+        if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
+          if (deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
+              deltaR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
               continue;
         }
         if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
@@ -848,20 +842,20 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       if (ptrk.pt() < track_pt_cut_forB) continue;
       if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
       if (UseDirectlyGenBeeK){
-        if (DR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
+        if (deltaR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
    	      continue;
       }
       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
       bool isMu = false; 
       bool isE  = false;
       for (const pat::Muon & mu : *muons){
-        if (DR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+        if (deltaR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
         isMu=true; 
       }
       // sara: don't understand
       if (!IsLowpTE || CombineElCol){
         for (const pat::Electron & el: *electrons) {     
-          if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+          if (deltaR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
             isE=true;
         } 
       }
@@ -956,7 +950,7 @@ ParkingNtupleMakerT<T1>::beginJob()
     if (reconstructBMuMuKstar) ToSave+="KstarLL_";
     if (AddLowPtElAsCol) ToSave+="LowPtEl_";
     if (AddLowPtGsfTrkAsCol) ToSave+="LowPtGsf_";
-    if (!data) ToSave+="GEN_";
+    if (!data ) ToSave+="GEN_";
     if (saveTracks) ToSave+="TRK_";
   } else ToSave=NtupleOutputClasses;
 
