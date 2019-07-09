@@ -1,16 +1,16 @@
 #include "BKstarlldecay.h"
 
 BKstarlldecay::BKstarlldecay(unsigned int &nmupairs_, std::vector<std::pair<unsigned int,unsigned int>>& used_lep_tracks, std::vector<reco::TransientTrack> & vmuTrack1,std::vector<reco::TransientTrack> & vmuTrack2, std::vector<reco::TransientTrack> & vKTrack, float beam_xz_,float beam_yz_ ,std::string RefitTracks_) : nmupairs(nmupairs_), used_muTracks_index(used_lep_tracks), muTrack1(vmuTrack1), muTrack2(vmuTrack2), KTrack(vKTrack), beam_xz(beam_xz_),beam_yz(beam_yz_),RefitBTracks(RefitTracks_)
-  {
-    temp.reserve(4); tempK.reserve(3); tempBpt.reserve(3); tempBx.reserve(3);
-    tempBex.reserve(3); tempBept.reserve(3); indexpair.clear();
-    if (RefitBTracks=="mu"){
-      RefitMu=true; RefitEl=false; 
-    }else if (RefitBTracks=="both"){
-      RefitMu=true; RefitEl=true; 
-    }else {
-      RefitMu=false; RefitEl=false;}
-  }
+{
+  temp.reserve(4); tempK.reserve(3); tempBpt.reserve(3); tempBx.reserve(3);
+  tempBex.reserve(3); tempBept.reserve(3); indexpair.clear();
+  if (RefitBTracks=="mu"){
+    RefitMu=true; RefitEl=false; 
+  }else if (RefitBTracks=="both"){
+    RefitMu=true; RefitEl=true; 
+  }else {
+    RefitMu=false; RefitEl=false;}
+}
 
 BKstarlldecay::~BKstarlldecay(){};
 
@@ -18,28 +18,28 @@ void BKstarlldecay::CombineTracks(float MPairmin,float MPairmax){
   MPairmin_=MPairmin; MPairmax_=MPairmax; int idx=-1;
   if (phill) pion_mass=kaon_mass;
   for(std::vector<reco::TransientTrack>::iterator trk1=KTrack.begin(); trk1!=KTrack.end(); ++trk1){
-   for(std::vector<reco::TransientTrack>::iterator trk2=trk1+1; trk2!=KTrack.end(); ++trk2){
-     if (trk1->charge()==trk2->charge()) continue;  
-     idx++;
-     vK.SetPtEtaPhiM(trk1->track().pt(),trk1->track().eta(),trk1->track().phi(),0.493);
-     vPi.SetPtEtaPhiM(trk2->track().pt(),trk2->track().eta(),trk2->track().phi(),0.139);
-     if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1){    
-       if (FormKstar(*trk1,*trk2)){
-         KstarTracks.emplace_back(std::make_pair(*trk1,*trk2));
-         indexpair.push_back(idx);
-       }
-     }
+    for(std::vector<reco::TransientTrack>::iterator trk2=trk1+1; trk2!=KTrack.end(); ++trk2){
+      if (trk1->charge()==trk2->charge()) continue;  
+      idx++;
+      vK.SetPtEtaPhiM(trk1->track().pt(),trk1->track().eta(),trk1->track().phi(),0.493);
+      vPi.SetPtEtaPhiM(trk2->track().pt(),trk2->track().eta(),trk2->track().phi(),0.139);
+      if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1){    
+        if (FormKstar(*trk1,*trk2)){
+          KstarTracks.emplace_back(std::make_pair(*trk1,*trk2));
+          indexpair.push_back(idx);
+        }
+      }
      
-     vK.SetPtEtaPhiM(trk2->track().pt(),trk2->track().eta(),trk2->track().phi(),0.493);
-     vPi.SetPtEtaPhiM(trk1->track().pt(),trk1->track().eta(),trk1->track().phi(),0.139);
-     if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1 && !phill){    
-       if (FormKstar(*trk2,*trk1)){
-         KstarTracks.emplace_back(std::make_pair(*trk2,*trk1));
-         indexpair.push_back(idx);
-       }
-     }  
-   }//trk2
-}//trk1
+      vK.SetPtEtaPhiM(trk2->track().pt(),trk2->track().eta(),trk2->track().phi(),0.493);
+      vPi.SetPtEtaPhiM(trk1->track().pt(),trk1->track().eta(),trk1->track().phi(),0.139);
+      if ( (vK+vPi).M()>MPairmin-0.1 && (vK+vPi).M()<MPairmax+0.1 && !phill){    
+        if (FormKstar(*trk2,*trk1)){
+          KstarTracks.emplace_back(std::make_pair(*trk2,*trk1));
+          indexpair.push_back(idx);
+        }
+      }  
+    }//trk2
+  }//trk1
 }
 
 bool BKstarlldecay::FormKstar(reco::TransientTrack & trkK,reco::TransientTrack & trkPi ){
@@ -73,18 +73,18 @@ void BKstarlldecay::Fill(NtupleContent &nt){
     if (RefitMu && RefitEl) RefitTracks=true; 
     else if (RefitMu && !IsE) RefitTracks=true;
     for(const std::pair<reco::TransientTrack,reco::TransientTrack> & pairtrk : KstarTracks){
-       tempBpt.clear(); tempBx.clear(); tempBex.clear(); tempBept.clear();
-       const reco::TransientTrack & trkK=pairtrk.first;
-       const reco::TransientTrack & trkPi=pairtrk.second;
-       vK.SetPtEtaPhiM(trkK.track().pt(),trkK.track().eta(),trkK.track().phi(),0.495);
-       vPi.SetPtEtaPhiM(trkPi.track().pt(),trkPi.track().eta(),trkPi.track().phi(),0.139);
-       if ((vmu1+vmu2+vK+vPi).M()<massmin_ || (vmu1+vmu2+vK+vPi).M()>massmax_) continue;
-       KinematicParticleFactoryFromTransientTrack pFactory;
-       std::vector<RefCountedKinematicParticle> allParticles;
-       allParticles.push_back(pFactory.particle(muTrack1.at(mindex),part_mass,chi,ndf,part_sigma));
-       allParticles.push_back(pFactory.particle(muTrack2.at(mindex),part_mass,chi,ndf,part_sigma));
-       allParticles.push_back(pFactory.particle(trkK,kaon_mass,chi,ndf,kaon_sigma));
-       allParticles.push_back(pFactory.particle(trkPi,pion_mass,chi,ndf,pion_sigma));
+      tempBpt.clear(); tempBx.clear(); tempBex.clear(); tempBept.clear();
+      const reco::TransientTrack & trkK=pairtrk.first;
+      const reco::TransientTrack & trkPi=pairtrk.second;
+      vK.SetPtEtaPhiM(trkK.track().pt(),trkK.track().eta(),trkK.track().phi(),0.495);
+      vPi.SetPtEtaPhiM(trkPi.track().pt(),trkPi.track().eta(),trkPi.track().phi(),0.139);
+      if ((vmu1+vmu2+vK+vPi).M()<massmin_ || (vmu1+vmu2+vK+vPi).M()>massmax_) continue;
+      KinematicParticleFactoryFromTransientTrack pFactory;
+      std::vector<RefCountedKinematicParticle> allParticles;
+      allParticles.push_back(pFactory.particle(muTrack1.at(mindex),part_mass,chi,ndf,part_sigma));
+      allParticles.push_back(pFactory.particle(muTrack2.at(mindex),part_mass,chi,ndf,part_sigma));
+      allParticles.push_back(pFactory.particle(trkK,kaon_mass,chi,ndf,kaon_sigma));
+      allParticles.push_back(pFactory.particle(trkPi,pion_mass,chi,ndf,pion_sigma));
       TripleTrackKinFit fitter(allParticles);
       if (!fitter.success()) continue;
       float ChiProb(ChiSquaredProbability(fitter.chi(),fitter.dof()));
@@ -92,18 +92,18 @@ void BKstarlldecay::Fill(NtupleContent &nt){
       GlobalPoint Dispbeamspot(-1*((nt.beam_x-fitter.Mother_XYZ().x())+(fitter.Mother_XYZ().z()-nt.beam_z)* beam_xz),-1*((nt.beam_y-fitter.Mother_XYZ().y())+ (fitter.Mother_XYZ().z()-nt.beam_z) * beam_yz), 0);              
       vperp.SetXYZ(Dispbeamspot.x(),Dispbeamspot.y(),0.);
       if (!RefitTracks)
-         pperp.SetXYZ((vmu1+vmu2+vK+vPi).Px(),(vmu1+vmu2+vK+vPi).Py(),0);
+        pperp.SetXYZ((vmu1+vmu2+vK+vPi).Px(),(vmu1+vmu2+vK+vPi).Py(),0);
       else
-         pperp.SetXYZ(fitter.Mother_Momentum(RefitTracks).x(),fitter.Mother_Momentum(RefitTracks).y(),0);
+        pperp.SetXYZ(fitter.Mother_Momentum(RefitTracks).x(),fitter.Mother_Momentum(RefitTracks).y(),0);
       float cos(vperp.Dot(pperp)/(vperp.R()*pperp.R()));
       if (cos<coscut_) continue;   
       nt.NRbks_cosTheta2D.push_back(cos);
       nt.NRbks_bspot_lxy.push_back(Dispbeamspot.perp());
       nt.NRbks_bspot_elxy.push_back(fitter.Mother_XYZError().rerr(Dispbeamspot));         
       if (!RefitTracks)
-	nt.NRbks_mass.push_back((vmu1+vmu2+vK+vPi).M());
+	    nt.NRbks_mass.push_back((vmu1+vmu2+vK+vPi).M());
       else
-         nt.NRbks_mass.push_back(fitter.Mother_Mass(RefitTracks));
+        nt.NRbks_mass.push_back(fitter.Mother_Mass(RefitTracks));
       nt.NRbks_chi_prob.push_back(ChiProb); 
       nt.NRbks_charge.push_back(fitter.Mother_Charge());
 
@@ -114,9 +114,10 @@ void BKstarlldecay::Fill(NtupleContent &nt){
       nt.NRbks_PiUNFITpt_eta_phi.push_back(tempK);
      
       if (!RefitTracks){
-	for (auto & x : {(vmu1+vmu2+vK+vPi).Pt(),(vmu1+vmu2+vK+vPi).Eta(),(vmu1+vmu2+vK+vPi).Phi()} ) tempBpt.push_back(x);
-      }else{
-         for (auto & x : {fitter.Mother_Momentum(RefitTracks).perp(),fitter.Mother_Momentum(RefitTracks).eta()} ) tempBpt.push_back(x);
+	    for (auto & x : {(vmu1+vmu2+vK+vPi).Pt(),(vmu1+vmu2+vK+vPi).Eta(),(vmu1+vmu2+vK+vPi).Phi()} ) tempBpt.push_back(x);
+      }
+      else{
+        for (auto & x : {fitter.Mother_Momentum(RefitTracks).perp(),fitter.Mother_Momentum(RefitTracks).eta()} ) tempBpt.push_back(x);
         tempBpt.push_back(fitter.Mother_Momentum(RefitTracks).phi());
       }
       nt.NRbks_pt_eta_phi.push_back(tempBpt);
@@ -156,8 +157,8 @@ void BKstarlldecay::Fill(NtupleContent &nt){
           nt.NRbks_l2pt_eta_phi.push_back(temp);    
       }
       nt.NRbks_ksmass.push_back((vK+vPi).M());
-      }
-     }
+    }
+  }
 }
 
 
