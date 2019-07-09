@@ -156,7 +156,7 @@ for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 
-process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
+process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
                               electrons      = cms.InputTag(electron_container),
                               lowptElectrons = cms.InputTag(electron_container2),

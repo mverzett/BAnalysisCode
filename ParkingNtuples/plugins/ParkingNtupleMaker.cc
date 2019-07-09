@@ -88,15 +88,15 @@ using namespace std;
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
 template<typename T1>
-class TriggerAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
+class ParkingNtupleMakerT : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
   typedef std::vector<T1> T1Collection;
   typedef edm::Ref<T1Collection> T1Ref;
   typedef edm::AssociationMap<edm::OneToValue<std::vector<T1>, float > > T1IsolationMap;
 
 public:
-  explicit TriggerAnalyzer(const edm::ParameterSet&);
-  ~TriggerAnalyzer();
+  explicit ParkingNtupleMakerT(const edm::ParameterSet&);
+  ~ParkingNtupleMakerT();
   
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   
@@ -222,7 +222,7 @@ private:
 // constructors and destructor
 //
 template<typename T1>
-TriggerAnalyzer<T1>::TriggerAnalyzer(const edm::ParameterSet& iConfig): 
+ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig): 
   beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))),
   vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
   electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
@@ -309,7 +309,7 @@ TriggerAnalyzer<T1>::TriggerAnalyzer(const edm::ParameterSet& iConfig):
 }
 
 template<typename T1>
-TriggerAnalyzer<T1>::~TriggerAnalyzer()
+ParkingNtupleMakerT<T1>::~ParkingNtupleMakerT()
 {
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
@@ -323,7 +323,7 @@ TriggerAnalyzer<T1>::~TriggerAnalyzer()
 // ------------ method called for each event  ------------
 
 template<typename T1> 
-float TriggerAnalyzer<T1>::Dphi(float phi1,float phi2){
+float ParkingNtupleMakerT<T1>::Dphi(float phi1,float phi2){
 float result = phi1 - phi2;
  while (result > float(M_PI)) result -= float(2*M_PI);
     while (result <= -float(M_PI)) result += float(2*M_PI);
@@ -332,14 +332,14 @@ return result;
 }
 
 template<typename T1> 
-float TriggerAnalyzer<T1>::DR(float eta1,float phi1,float eta2, float phi2){
+float ParkingNtupleMakerT<T1>::DR(float eta1,float phi1,float eta2, float phi2){
   return TMath::Sqrt((eta1-eta2)*(eta1-eta2)+Dphi(phi1,phi2)*Dphi(phi1,phi2));
 }
 
 
 
 template<typename T1> 
-std::vector<std::vector<float>> TriggerAnalyzer<T1>::track_DCA(std::vector<reco::TransientTrack> ttks) {
+std::vector<std::vector<float>> ParkingNtupleMakerT<T1>::track_DCA(std::vector<reco::TransientTrack> ttks) {
   std::vector<std::vector<float>> dca;
   std::vector<float> def;
   def.push_back(-9999999);
@@ -364,7 +364,7 @@ std::vector<std::vector<float>> TriggerAnalyzer<T1>::track_DCA(std::vector<reco:
 
 template<typename T1>
 std::vector<GlobalVector>
-TriggerAnalyzer<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks){
+ParkingNtupleMakerT<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks){
   std::auto_ptr<TrajectoryStateClosestToPoint> traj1;
   std::auto_ptr<TrajectoryStateClosestToPoint> traj2;
   GlobalPoint vtxPos(myVertex.position().x(), myVertex.position().y(), myVertex.position().z());
@@ -389,7 +389,7 @@ TriggerAnalyzer<T1>::refit_tracks(TransientVertex myVertex,std::vector<reco::Tra
 
 template<typename T1>
 void
-TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   using namespace std;
@@ -943,7 +943,7 @@ TriggerAnalyzer<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 // ------------ method called once each job just before starting event loop  ------------
 template<typename T1>
 void 
-TriggerAnalyzer<T1>::beginJob()
+ParkingNtupleMakerT<T1>::beginJob()
 {
   t1=fs->make<TTree>("mytree","mytree");
   
@@ -967,7 +967,7 @@ TriggerAnalyzer<T1>::beginJob()
 // ------------ method called once each job just after ending the event loop  ------------
 template<typename T1>
 void 
-TriggerAnalyzer<T1>::endJob() 
+ParkingNtupleMakerT<T1>::endJob() 
 {
   std::cout<<"Processed "<<nevts<<std::endl;
   if (NtupleOutputClasses=="flat"){
@@ -1009,7 +1009,7 @@ TriggerAnalyzer<T1>::endJob()
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 template<typename T1>
 void
-TriggerAnalyzer<T1>::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+ParkingNtupleMakerT<T1>::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -1018,5 +1018,5 @@ TriggerAnalyzer<T1>::fillDescriptions(edm::ConfigurationDescriptions& descriptio
 }
 
 //define this as a plug-in
-typedef TriggerAnalyzer<reco::RecoEcalCandidate> TriggerAnalyzerb;
-DEFINE_FWK_MODULE(TriggerAnalyzerb);
+typedef ParkingNtupleMakerT<reco::RecoEcalCandidate> ParkingNtupleMaker;
+DEFINE_FWK_MODULE(ParkingNtupleMaker);
