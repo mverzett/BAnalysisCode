@@ -4,10 +4,11 @@ import FWCore.ParameterSet.Config as cms
 selections = cms.PSet(
   electrons = cms.PSet(
     low_pt_collection = cms.InputTag('slimmedLowPtElectrons'),
-    low_pt_selection = cms.string('abs(eta) < 2.5 && electronID("unbiased_seed") > -4'),
+    low_pt_selection = cms.string('gsfTrack().ptMode() >= 0.5 && passConversionVeto() && electronID("unbiased_seed") >= -4'), #FIXME: add abs(eta) < 2.5
     pf_collection = cms.InputTag('slimmedElectrons'),
-    pf_selection = cms.string("abs(eta) < 2.5"),
-    cross_cleaning_code = cms.double(0.03),
+    pf_selection = cms.string("passConversionVeto()"), #FIXME: add abs(eta) < 2.5
+    cross_cleaning_cone = cms.double(0.03),
+    cross_cleaning_dz = cms.double(0.7),
   )
 )
 
@@ -15,7 +16,7 @@ IsData=True
 Run="B"
 Nentries=100;  
 output="output_flat.root"; 
-mlog=10; 
+mlog=1; 
 saveTrk=False; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
 
@@ -175,7 +176,9 @@ process.lowptElectronsWithSeed.src = selections.electrons.low_pt_collection
 process.lowptElectronsForAnalysis.cut = selections.electrons.low_pt_selection
 process.pfElectronsForAnalysis.src = selections.electrons.pf_collection
 process.pfElectronsForAnalysis.cut = selections.electrons.pf_selection
-process.electronsForAnalysis.drForCleaning = selections.electrons.cross_cleaning_code
+process.electronsForAnalysis.drForCleaning = selections.electrons.cross_cleaning_cone
+process.electronsForAnalysis.dzForCleaning = selections.electrons.cross_cleaning_dz
+
 
 process.ntuplesSeq *= process.electrons
 

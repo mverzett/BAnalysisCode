@@ -568,7 +568,6 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   for(const pat::Electron &el : *electrons){
     eindex++;
     if(fabs(TrgmuDz - el.vz()) > ElectronDzCut) continue;
-    if(!el.passConversionVeto()) continue;
     bool is_lowpt = el.userInt("isLowPt");
     float pt = is_lowpt ? el.gsfTrack()->ptMode()  : el.pt();
     nt.el_pt.push_back(pt);

@@ -18,7 +18,8 @@ public:
   explicit ElectronMerger(const edm::ParameterSet &cfg):
     lowpt_src_{ consumes<pat::ElectronCollection>( cfg.getParameter<edm::InputTag>("lowptSrc") )},
     pf_src_{ consumes<pat::ElectronCollection>( cfg.getParameter<edm::InputTag>("pfSrc") )},
-    dr_cleaning_{cfg.getParameter<double>("drForCleaning")} {
+    dr_cleaning_{cfg.getParameter<double>("drForCleaning")},
+    dz_cleaning_{cfg.getParameter<double>("dzForCleaning")} {
       produces<pat::ElectronCollection>();
   }
 
@@ -32,6 +33,7 @@ private:
   const edm::EDGetTokenT<pat::ElectronCollection> lowpt_src_;
   const edm::EDGetTokenT<pat::ElectronCollection> pf_src_;
   const double dr_cleaning_;
+  const double dz_cleaning_;
 };
 
 void ElectronMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const &) const {
@@ -53,6 +55,7 @@ void ElectronMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
   for(auto ele : *lowpt) {
     double min_dr = std::numeric_limits<double>::max();
     for(const auto& pfele : *pf) {
+      if(fabs(pfele.vz() - ele.vz()) > dz_cleaning_) continue;
       min_dr = std::min(min_dr, reco::deltaR(ele, pfele));
     }
     if(min_dr < dr_cleaning_) continue;

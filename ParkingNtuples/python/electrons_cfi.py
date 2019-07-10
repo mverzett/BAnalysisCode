@@ -24,6 +24,7 @@ electronsForAnalysis = cms.EDProducer(
   lowptSrc = cms.InputTag('lowptElectronsForAnalysis'),
   pfSrc    = cms.InputTag('pfElectronsForAnalysis'),
   drForCleaning = cms.double(0.00),
+  dzForCleaning = cms.double(0.00),
 )
 
 electrons = cms.Sequence(
