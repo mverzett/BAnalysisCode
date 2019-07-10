@@ -53,12 +53,14 @@ void ElectronMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
   }
 
   for(auto ele : *lowpt) {
-    double min_dr = std::numeric_limits<double>::max();
+    bool clean_out = false;
     for(const auto& pfele : *pf) {
-      if(fabs(pfele.vz() - ele.vz()) > dz_cleaning_) continue;
-      min_dr = std::min(min_dr, reco::deltaR(ele, pfele));
+      clean_out |= (
+        fabs(pfele.vz() - ele.vz()) < dz_cleaning_ &&
+        reco::deltaR(ele, pfele) < dr_cleaning_
+        );
     }
-    if(min_dr < dr_cleaning_) continue;
+    if(clean_out) continue;
     ele.addUserInt("isPF", 0);
     ele.addUserInt("isLowPt", 1);
     out->push_back(ele);
