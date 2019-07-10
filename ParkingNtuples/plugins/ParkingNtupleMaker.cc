@@ -174,7 +174,6 @@ private:
   int LepIdToMatch=-1; 
   int BpdgIdToMatch=-1;
   bool IsResonantDecayToMatch=false; 
-  bool AddLowPtElAsCol=false;
   bool AddLowPtGsfTrkAsCol=false; 
   bool AddPFElAsCol=false;
   std::string NtupleOutputClasses="auto"; 
@@ -269,7 +268,6 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   LepIdToMatch= runParameters.getParameter<int>("LepIdToMatch");
   BpdgIdToMatch=runParameters.getParameter<int>("BpdgIdToMatch");
   IsResonantDecayToMatch=runParameters.getParameter<bool>("IsResonantDecayToMatch");
-  AddLowPtElAsCol=runParameters.getParameter<bool>("AddLowPtElAsCol");
   AddLowPtGsfTrkAsCol=runParameters.getParameter<bool>("AddLowGsfTrkAsCol");
   AddPFElAsCol=runParameters.getParameter<bool>("AddPFElAsCol");
   NtupleOutputClasses=runParameters.getParameter<std::string>("NtupleOutputClasses");
@@ -869,7 +867,6 @@ ParkingNtupleMaker::beginJob()
     if (NtupleOutputClasses=="lite") ToSave+="Lite_";
     if (reconstructBMuMuK) ToSave+="KLL_";
     if (reconstructBMuMuKstar) ToSave+="KstarLL_";
-    if (AddLowPtElAsCol) ToSave+="LowPtEl_";
     if (AddLowPtGsfTrkAsCol) ToSave+="LowPtGsf_";
     if (!data) ToSave+="GEN_";
     if (saveTracks) ToSave+="TRK_";

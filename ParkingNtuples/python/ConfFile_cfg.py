@@ -26,7 +26,6 @@ ElectronsOnly = True;
 
 TrgMuCone=0.1
 UseLowpTe=False; 
-LowPtElCollection=False; 
 CombinePFLowPtEl=True;
 LowPtGsfTrkCollection=False; 
 PFelCollection=False;
@@ -58,10 +57,6 @@ electron_container="slimmedElectrons"
 if UseLowpTe:
   print "Low pT e collection instead of PF e."
   electron_container="slimmedLowPtElectrons"
-
-electron_container2="slimmedElectrons"
-if CombinePFLowPtEl or UseLowpTe or LowPtElCollection or LowPtGsfTrkCollection:
-  electron_container2="slimmedLowPtElectrons"
 
 if CombinePFLowPtEl and UseLowpTe:
   print "requested to use low pT as complementary and primary collection -> impossible, using PF as primary"
@@ -258,7 +253,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       LepIdToMatch=cms.int32(Bdecaymatch["LepId"]),
       KIdToMatch=cms.int32(Bdecaymatch["KId"]),
       IsResonantDecayToMatch=cms.bool(Bdecaymatch["Jtoll"]),
-      AddLowPtElAsCol=cms.bool(LowPtElCollection),
       AddLowGsfTrkAsCol=cms.bool(LowPtGsfTrkCollection),
       AddPFElAsCol=cms.bool(PFelCollection),
       NtupleOutputClasses=cms.string(NtupleClasses)
