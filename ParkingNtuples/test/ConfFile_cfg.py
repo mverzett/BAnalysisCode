@@ -9,7 +9,10 @@ selections = cms.PSet(
     pf_selection = cms.string("passConversionVeto()"), #FIXME: add abs(eta) < 2.5
     cross_cleaning_cone = cms.double(0.03),
     cross_cleaning_dz = cms.double(0.7),
-  )
+  ),
+  tracks = cms.PSet(
+     selection = cms.string('pt > 0.8 && abs(eta) < 2.5'),
+  ),
 )
 
 IsData=True
@@ -17,7 +20,7 @@ Run="B"
 Nentries=100;  
 output="output_flat.root"; 
 mlog=1; 
-saveTrk=False; 
+saveTrk=True; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
 
 MuonsOnly     = True; 
@@ -140,6 +143,9 @@ process.ntuplesSeq = cms.Sequence(
   #process.egmGsfElectronIDSequence
 )
 
+#
+#  Electrons
+#
 process.load('BAnalysisCode/ParkingNtuples/electrons_cfi')
 process.lowptElectronsWithSeed.src = selections.electrons.low_pt_collection
 process.lowptElectronsForAnalysis.cut = selections.electrons.low_pt_selection
@@ -147,9 +153,14 @@ process.pfElectronsForAnalysis.src = selections.electrons.pf_collection
 process.pfElectronsForAnalysis.cut = selections.electrons.pf_selection
 process.electronsForAnalysis.drForCleaning = selections.electrons.cross_cleaning_cone
 process.electronsForAnalysis.dzForCleaning = selections.electrons.cross_cleaning_dz
-
-
 process.ntuplesSeq *= process.electrons
+
+#
+#  Tracks
+#
+process.load('BAnalysisCode/ParkingNtuples/tracks_cfi')
+process.selectedTracks.cut = selections.tracks.selection
+process.ntuplesSeq *= process.tracks
 
 process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
@@ -184,9 +195,7 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               l1muons       = cms.InputTag("gmtStage2Digis","Muon"),
                               packed        = cms.InputTag("packedGenParticles"),
                               pruned        = cms.InputTag("prunedGenParticles"),
-                              PFCands       = cms.InputTag("packedPFCandidates"),
-                              losttracks    = cms.InputTag("lostTracks"),
-
+                              tracks        = cms.InputTag("selectedTracks"),
                                RunParameters = cms.PSet(
       Data= cms.bool(IsData),
       SaveTracks=cms.bool(saveTrk),

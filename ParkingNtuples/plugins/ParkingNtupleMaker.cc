@@ -113,10 +113,9 @@ private:
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
   edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
+  edm::EDGetTokenT<reco::TrackCollection> tracksToken_;
   edm::EDGetToken muonsToken_;
 //  edm::EDGetToken photonToken_;
-  edm::EDGetToken PFCands_;
-  edm::EDGetToken LostTracks_;
   edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
   vector<string> Seed_;
@@ -190,7 +189,6 @@ private:
   std::vector<reco::TransientTrack> muTrack1,muTrack2,muPfTrack1,muPfTrack2;
   std::vector<std::pair<unsigned int,unsigned int>> used_muTrack_index,used_eTrack_index,used_muTrack_pfTrack_index;
   std::vector<reco::CandidatePtr> footprint; 
-  std::vector<pat::PackedCandidate> tracks;
   int nmupfpairs=0;
   reco::TrackBase::Point vertex_point;
 
@@ -204,13 +202,12 @@ private:
 // constructors and destructor
 //
 ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig): 
-  beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))),
-  vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
-  electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
+  beamSpotToken_{consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))},
+  vtxToken_{consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))},
+  electronsToken_{consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))},
+  tracksToken_{consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("tracks"))},
   muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
 // photonToken_(consumes<std::vector<pat::Photon>>(iConfig.getParameter<edm::InputTag>("photons"))),
-  PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
-  LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
 // Tracks_(consumes<std::vector<reco::Track> >(iConfig.getParameter<edm::InputTag>("tracks"))),
   l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
   l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
@@ -362,10 +359,8 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   iEvent.getByToken(electronsToken_, electrons); 
   edm::Handle<std::vector<pat::Muon>> muons;
   iEvent.getByToken(muonsToken_,muons);
-  edm::Handle<vector<pat::PackedCandidate>> tracks1;
-  iEvent.getByToken(PFCands_, tracks1);
-  edm::Handle<vector<pat::PackedCandidate>> tracks2;
-  iEvent.getByToken(LostTracks_, tracks2);
+  edm::Handle<reco::TrackCollection> tracks;
+  iEvent.getByToken(tracksToken_, tracks);
   edm::ESHandle<MagneticField> bFieldHandle;
   iSetup.get<IdealMagneticFieldRecord>().get(bFieldHandle);
 
@@ -392,7 +387,6 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   muttks.clear();
   KTrack.clear();
   KTrack_index.clear();
-  tracks.clear();
   muTrack1.clear();
   muTrack2.clear();
   used_muTrack_index.clear();
@@ -561,57 +555,40 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
     nt.nel++;
   }
-  //save tracks
-  for (const pat::PackedCandidate &trk : *tracks1) {
-    if (!trk.trackHighPurity()) continue;
-    tracks.push_back(trk); 
-  }
   
-  if (AddLostTracks){
-    for (const pat::PackedCandidate &trk : *tracks2) {
-      tracks.push_back(trk); 
+  for (const reco::Track &trk : *tracks){      
+    if (fabs(TrgmuDz - trk.vz()) > ElectronDzCut) continue;
+    if (UseDirectlyGenBeeK){
+      if (deltaR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
+    } 
+    bool isMu=false;
+    bool isE=false;
+    for (const pat::Muon & mu :*muons){
+      if (deltaR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
     }
+    for (const pat::Electron & el : *electrons) {     
+      if (deltaR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
+        isE=true;
+    }
+     
+    if(isMu || isE ) continue;
+    nt.track_pt.push_back(trk.pt());
+    nt.track_eta.push_back(trk.eta());
+    nt.track_phi.push_back(trk.phi());
+    nt.track_charge.push_back(trk.charge());
+     
+    nt.track_highPurity.push_back(
+      trk.quality(reco::TrackBase::highPurity)
+      );
+     
+    nt.track_norm_chi2.emplace_back(trk.normalizedChi2());
+    nt.track_dxy.push_back(trk.dxy(vertex_point));
+    nt.track_dz.push_back(trk.dz(vertex_point));
+    nt.track_validhits.push_back(trk.numberOfValidHits());
+    nt.track_losthits.push_back(trk.numberOfLostHits());
+    // nt.track_fromPV.push_back(trk.fromPV()); FIXME!
+    nt.ntracks++; 
   }
-
-  if (saveTracks){
-    for (const pat::PackedCandidate &trk : tracks){      
-      if(trk.charge()==0) continue;
-      if(fabs(trk.pdgId())!=211) continue;
-      if(!trk.hasTrackDetails())continue;
-      if (trk.pt()< track_pt_cut_forB) continue;
-      if (fabs(trk.eta())>EtaTrk_Cut) continue;
-      if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
-      if (UseDirectlyGenBeeK){
-        if (deltaR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
-      } 
-      bool isMu=false;
-      bool isE=false;
-      for (const pat::Muon & mu :*muons){
-        if (deltaR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
-      }
-      for (const pat::Electron & el : *electrons) {     
-        if (deltaR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
-          isE=true;
-      }
-     
-      if(isMu || isE ) continue;
-      nt.track_pt.push_back(trk.pt());
-      nt.track_eta.push_back(trk.eta());
-      nt.track_phi.push_back(trk.phi());
-      nt.track_charge.push_back(trk.charge());
-     
-      if(trk.trackHighPurity()) nt.track_highPurity.push_back(1);
-      else nt.track_highPurity.push_back(0);
-     
-      nt.track_norm_chi2.emplace_back(trk.pseudoTrack().normalizedChi2());
-      nt.track_dxy.push_back(trk.dxy(vertex_point));
-      nt.track_dz.push_back(trk.dz(vertex_point));
-      nt.track_validhits.push_back(trk.numberOfHits());
-      nt.track_losthits.push_back(trk.lostInnerHits());
-      nt.track_fromPV.push_back(trk.fromPV());
-      nt.ntracks++; 
-    }
-  }//save tracks
 
   if(!reconstructBMuMuK && !reconstructBMuMuKstar){ 
     t1->Fill(); 
@@ -690,11 +667,9 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (mu.pt()<min_muon_pt_cut_forB) continue;
       if (fabs(mu.eta())>2.5) continue;
       if (!mu.isSoftMuon(firstGoodVertex)) continue;
-      for(const pat::PackedCandidate &trk: tracks){
-        if(mu.charge()==trk.charge()) continue;
+      for(const reco::Track &trk : *tracks){
+        if(mu.charge() == trk.charge()) continue;
         if(trk.charge()==0) continue;
-        if(fabs(trk.pdgId())!=211) continue;
-        if(!trk.hasTrackDetails())continue;
         if (trk.pt()< min_muon_pt_cut_forB) continue;
         if (fabs(trk.eta())>EtaTrk_Cut) continue;
         if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
@@ -706,8 +681,8 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             (vmu1+vmu2).M()>MLLmax_Cut ) 
             continue;
         muTrack1.emplace_back(reco::TransientTrack(*mu.bestTrack(),   &(*bFieldHandle) ) );
-        muTrack2.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle) ) );
-        used_muTrack_pfTrack_index.emplace_back(std::make_pair( &mu-&(muons->at(0)), &trk-&tracks[0]));      
+        muTrack2.emplace_back(reco::TransientTrack(trk, &(*bFieldHandle) ) );
+        used_muTrack_pfTrack_index.emplace_back(std::make_pair( &mu-&(muons->at(0)), &trk-&(*tracks)[0]));      
         nmupfpairs++;
       } 
     }
@@ -716,19 +691,15 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   int index=-1;
   if ( (used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && \
        (reconstructBMuMuK || reconstructBMuMuKstar) ){
-    for (const pat::PackedCandidate & trk: tracks){
+    for(const reco::Track &ptrk : *tracks){
       index++;
-      if(trk.charge()==0)        continue;
-      if(fabs(trk.pdgId())!=211) continue;
-      if(!trk.hasTrackDetails()) continue;
-      reco::Track ptrk = trk.pseudoTrack();
       if (ptrk.pt() < track_pt_cut_forB) continue;
       if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
       if (UseDirectlyGenBeeK){
         if (deltaR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
    	      continue;
       }
-      if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
+      if (fabs(TrgmuDz-ptrk.vz())>ElectronDzCut) continue;
       bool isMu = false; 
       bool isE  = false;
       for (const pat::Muon & mu : *muons){
@@ -742,7 +713,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       } 
       if(isMu || isE ) continue;
       KTrack.emplace_back(reco::TransientTrack(ptrk,&(*bFieldHandle)));
-      KTrack_index.push_back(&trk-&tracks[0]);  
+      KTrack_index.push_back(&ptrk-&(*tracks)[0]);  
     }
   }
 
