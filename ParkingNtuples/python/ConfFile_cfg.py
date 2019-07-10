@@ -25,10 +25,6 @@ ElectronsOnly = True;
 
 
 TrgMuCone=0.1
-UseLowpTe=False; 
-CombinePFLowPtEl=True;
-LowPtGsfTrkCollection=False; 
-PFelCollection=False;
 elcuts=dict(El1Pt=1.5,El2Pt=0.5,Dz=0.7,DzeeMax=1.0,El1WP=3,El2WP=-4,PFLowPtCone=0.03)
 EtaCut=2.5; 
 TrkPtCut=0.8; 
@@ -53,16 +49,6 @@ File=[
  #  eventsToProcess=cms.untracked.VEventRange('317696:399:MIN-317696:399:MAX')
 
 ##########
-electron_container="slimmedElectrons"
-if UseLowpTe:
-  print "Low pT e collection instead of PF e."
-  electron_container="slimmedLowPtElectrons"
-
-if CombinePFLowPtEl and UseLowpTe:
-  print "requested to use low pT as complementary and primary collection -> impossible, using PF as primary"
-if CombinePFLowPtEl:
-  print "Both collection of e will be used."   
-
 if RecoBtoKLepLep : 
    print "reconstructing B->K(J/psi)ll channel"
 if RecoBtoKstarLepLep :
@@ -221,7 +207,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       ElectronDzCut=cms.double(elcuts["Dz"]), 
       DzeeMaxCut=cms.double(elcuts["DzeeMax"]),
       TrgConeCut=cms.double(TrgMuCone), 
-      IsLowpTE=cms.bool(UseLowpTe), 
       MVAEl1Cut=cms.double(elcuts["El1WP"]),
       MVAEl2Cut=cms.double(elcuts["El2WP"]),
       PointingConstraint=cms.bool(False),
@@ -238,8 +223,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       PtBminCut=cms.double(Bcuts["PtMin"]),
       CosThetaCut=cms.double(Bcuts["Cos"]),
       ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
-      CombineElCol=cms.bool(CombinePFLowPtEl),
-      CombineCone=cms.double(elcuts["PFLowPtCone"]),
       MKstarMin_Cut=cms.double(0.742),
       MKstarMax_Cut=cms.double(1.042),
       LepTrkExclusionCone=cms.double(0.005),
@@ -253,8 +236,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       LepIdToMatch=cms.int32(Bdecaymatch["LepId"]),
       KIdToMatch=cms.int32(Bdecaymatch["KId"]),
       IsResonantDecayToMatch=cms.bool(Bdecaymatch["Jtoll"]),
-      AddLowGsfTrkAsCol=cms.bool(LowPtGsfTrkCollection),
-      AddPFElAsCol=cms.bool(PFelCollection),
       NtupleOutputClasses=cms.string(NtupleClasses)
   ),
 )

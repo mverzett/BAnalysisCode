@@ -164,7 +164,6 @@ private:
   double Electron2PtCut=0; 
   double ElectronDzCut=0; 
   double TrgConeCut=-1;
-  bool IsLowpTE=false; 
   double MVAEl1Cut=-20; 
   double MVAEl2Cut=-20;
   double CosThetaCut=-1; 
@@ -174,11 +173,7 @@ private:
   int LepIdToMatch=-1; 
   int BpdgIdToMatch=-1;
   bool IsResonantDecayToMatch=false; 
-  bool AddLowPtGsfTrkAsCol=false; 
-  bool AddPFElAsCol=false;
   std::string NtupleOutputClasses="auto"; 
-  bool CombineElCol=false;
-  double CombineCone=0; 
   bool RetrieveMuFromTrk=false; 
   double maxPtTrk=0;
   double DzeeMaxCut=1000; 
@@ -258,7 +253,6 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   Electron1PtCut=runParameters.getParameter<double>("Electron1PtCut");
   Electron2PtCut=runParameters.getParameter<double>("Electron2PtCut");
   TrgConeCut=runParameters.getParameter<double>("TrgConeCut");
-  IsLowpTE=runParameters.getParameter<bool>("IsLowpTE");
   MVAEl1Cut=runParameters.getParameter<double>("MVAEl1Cut");
   MVAEl2Cut=runParameters.getParameter<double>("MVAEl2Cut");
   CosThetaCut=runParameters.getParameter<double>("CosThetaCut");
@@ -268,11 +262,7 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   LepIdToMatch= runParameters.getParameter<int>("LepIdToMatch");
   BpdgIdToMatch=runParameters.getParameter<int>("BpdgIdToMatch");
   IsResonantDecayToMatch=runParameters.getParameter<bool>("IsResonantDecayToMatch");
-  AddLowPtGsfTrkAsCol=runParameters.getParameter<bool>("AddLowGsfTrkAsCol");
-  AddPFElAsCol=runParameters.getParameter<bool>("AddPFElAsCol");
   NtupleOutputClasses=runParameters.getParameter<std::string>("NtupleOutputClasses");
-  CombineElCol=runParameters.getParameter<bool>("CombineElCol");
-  CombineCone=runParameters.getParameter<double>("CombineCone");
   maxPtTrk=runParameters.getParameter<double>("maxPtTrk");
   RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
   DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
@@ -624,11 +614,9 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       for (const pat::Muon & mu :*muons){
         if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
       }
-      if (CombineElCol || !IsLowpTE){
-        for (const pat::Electron & el : *electrons) {     
-          if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
-            isE=true;
-        }
+      for (const pat::Electron & el : *electrons) {     
+        if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
+          isE=true;
       }
      
       if(isMu || isE ) continue;
@@ -773,12 +761,10 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         isMu=true; 
       }
       // sara: don't understand
-      if (!IsLowpTE || CombineElCol){
-        for (const pat::Electron & el: *electrons) {     
-          if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
-            isE=true;
-        } 
-      }
+      for (const pat::Electron & el: *electrons) {     
+        if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+          isE=true;
+      } 
       if(isMu || isE ) continue;
       KTrack.emplace_back(reco::TransientTrack(ptrk,&(*bFieldHandle)));
       KTrack_index.push_back(&trk-&tracks[0]);  
@@ -867,7 +853,6 @@ ParkingNtupleMaker::beginJob()
     if (NtupleOutputClasses=="lite") ToSave+="Lite_";
     if (reconstructBMuMuK) ToSave+="KLL_";
     if (reconstructBMuMuKstar) ToSave+="KstarLL_";
-    if (AddLowPtGsfTrkAsCol) ToSave+="LowPtGsf_";
     if (!data) ToSave+="GEN_";
     if (saveTracks) ToSave+="TRK_";
   } else ToSave=NtupleOutputClasses;
