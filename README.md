@@ -1,20 +1,22 @@
-Instalation:
+## Instalation:
 
 A clean CMSSW area above 10_2_X. The specific code is being used in 10_5_0. In p
 rinciple any area is good.
 
+```
 cmsrel CMSSW_10_5_0
 cd CMSSW_10_5_0/src
 cmsenv
 git clone https://github.com/gkaratha/BAnalysisCode
-mv BAnalysisCode/HLTAnalysis . 
-(temporary, the folder BAnalysis was not supposed to be there. I will fix it)
 scram b -j 8
+```
 ready!
 
 Running:
-cd HLTAnalysis/TriggerAnalyzer/python
+```
+cd BAnalysisCode/TriggerAnalyzer/python
 cmsRun ConfFile_cfg.py
+```
 
 Details of configuration:
 all options are in the first 20 lines

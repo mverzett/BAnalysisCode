@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 
 IsData=True
 Run="A"
-Nentries=1000;  
+Nentries=100;  
 output="output_flat.root"; 
 mlog=100; 
 saveTrk=False; 
@@ -80,18 +80,6 @@ SkipNoKsLL=False
 if RecoBtoKstarLepLep and SkipEventWithNoRecoB :
    SkipNoKsLL=True
 
-if Run=="A":
-   n1="HLT_Mu9_IP6_part" ; n2="HLT_Mu8p5_IP3p5" ; n3 ="HLT_Mu10p5_IP3p5" ; 
-   n4="HLT_Mu8_IP3"; n5="empty" ; n6="empty" ; n7="empty" ; n8="empty" 
-elif Run=="B":
-   n1="HLT_Mu9_IP6_part" ; n2="HLT_Mu9_IP5" ; n3 ="HLT_Mu7_IP4" ; 
-   n4="HLT_Mu8_IP3"; n5="HLT_Mu12_IP6" ; n6="empty" ; n7="empty" ; n8="empty"
-elif Run=="D":
-   n1="HLT_Mu9_IP6_part" ; n2="HLT_Mu9_IP5" ; n3="HLT_Mu7_IP4"; n4="HLT_Mu8_IP3"; n5="HLT_Mu12_IP6" ; n6="HLT_Mu9_IP4" ; n7="HLT_Mu8_IP6"; n8="HLT_Mu8_IP5"
-else:
-   n1="empty" ; n2=n1 ;n3=n1 ; n4=n1 ; n5=n1 ; n6=n1 ; n7=n1 ; n8=n1
-   
-
 globaltag='102X_upgrade2018_realistic_v15' 
 L1save=False ; HLTsave=False ; HLTfired=False
 if IsData:
@@ -156,14 +144,13 @@ for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 
-process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
+process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
                               electrons      = cms.InputTag(electron_container),
                               lowptElectrons = cms.InputTag(electron_container2),
                               lowptGsftracks = cms.InputTag("lowPtGsfEleGsfTracks"),
                               pfElectrons    = cms.InputTag("slimmedElectrons"),
                               vertices       = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                              jets           = cms.InputTag("slimmedJets"),
                               photons        = cms.InputTag("slimmedPhotons"),
                               eleIdMapVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
                               eleIdMapSoft   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose"),
@@ -173,17 +160,31 @@ process.demo = cms.EDAnalyzer('TriggerAnalyzerb',
                               eleBiasedWP    = cms.InputTag("lowPtGsfElectronSeedValueMaps","ptbiased","RECO"),
                               eleUnbiasedWP  = cms.InputTag("lowPtGsfElectronSeedValueMaps","unbiased","RECO"),
                               #If you want no L1_Seed, write "default" in the first element and the tree will write the value -100
-                              Seed           = cms.vstring("L1_SingleMu7er1p5","L1_SingleMu8er1p5","L1_SingleMu9er1p5","L1_SingleMu10er1p5","L1_SingleMu12er1p5","L1_SingleMu22"),
-                              HLTPath        = cms.vstring(n1,n2,n3,n4,n5,n6,n7,n8),
+                              Seed           = cms.vstring("L1_SingleMu7er1p5",
+                                                           "L1_SingleMu8er1p5",
+                                                           "L1_SingleMu9er1p5",
+                                                           "L1_SingleMu10er1p5",
+                                                           "L1_SingleMu12er1p5",
+                                                           "L1_SingleMu22"
+                                                           ),
+                              HLTPath        = cms.vstring(
+                                                            "HLT_Mu7_IP4"      ,
+                                                            "HLT_Mu8_IP3"      ,
+                                                            "HLT_Mu8_IP5"      ,
+                                                            "HLT_Mu8_IP6"      ,
+                                                            "HLT_Mu8p5_IP3p5"  ,
+                                                            "HLT_Mu9_IP4"      ,
+                                                            "HLT_Mu9_IP5"      ,
+                                                            "HLT_Mu9_IP6"      ,
+                                                            "HLT_Mu10p5_IP3p5" ,
+                                                            "HLT_Mu12_IP6"     ,
+                                                           ),
 ################################NORMALLY USE THIS####################### 
                               triggerresults = cms.InputTag("TriggerResults::HLT"),
                               triggerobjects = cms.InputTag('slimmedPatTrigger',),                   
                               muons         = cms.InputTag("slimmedMuons"),
-                              met           = cms.InputTag("slimmedMETs"),
                               l1seed        = cms.InputTag("gtStage2Digis::RECO"),
-                              l1met         = cms.InputTag('caloStage2Digis','EtSum'), 
                               l1muons       = cms.InputTag("gmtStage2Digis","Muon"),
-                              l1jets        = cms.InputTag('caloStage2Digis','Jet'),                            
                               packed        = cms.InputTag("packedGenParticles"),
                               pruned        = cms.InputTag("prunedGenParticles"),
                               PFCands       = cms.InputTag("packedPFCandidates"),
