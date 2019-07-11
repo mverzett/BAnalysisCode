@@ -22,12 +22,11 @@ public:
    std::vector<float> vertex_x,vertex_y,vertex_z,vertex_ex,vertex_ey,
    vertex_ez,vertex_chi,vertex_ndof;
    // trigger vars
-   int trigger1,trigger2,trigger3,trigger4,trigger5,trigger6,trigger7,trigger8;
-   int l1_seed1,l1_seed2,l1_seed3,l1_seed4,l1_seed5,l1_seed6;
+   int hlt_mu7_ip4, hlt_mu8_ip3, hlt_mu8_ip5, hlt_mu8_ip6, hlt_mu8p5_ip3p5, hlt_mu9_ip4, hlt_mu9_ip5, hlt_mu9_ip6, hlt_mu10_ip3p5, hlt_mu12_ip6 ;
+   int l1_mu7er,l1_mu8er,l1_mu9er,l1_mu10er,l1_mu12er,l1_mu22;
    std::vector<std::vector<float>> tr1_obj_pt_eta_phi,tr2_obj_pt_eta_phi,
    tr3_obj_pt_eta_phi,tr4_obj_pt_eta_phi,tr5_obj_pt_eta_phi,tr6_obj_pt_eta_phi,
    tr7_obj_pt_eta_phi,tr8_obj_pt_eta_phi;
-   float l1met,l1met_phi,l1ht,l1hf_met,l1hf_met_phi;
    std::vector<float> l1muon_eta,l1muon_iso,l1muon_pt,l1muon_phi,l1muon_qual,l1jet_pt,l1jet_phi,l1jet_eta,l1jet_iso,l1jet_qual;
    int nmuons,nel,ntracks,njets,muon_trgIndex;
    //muons

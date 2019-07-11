@@ -8,12 +8,24 @@ void NtupleContent::SetTree(TTree *mytree){
 
 void NtupleContent::ClearVariables(){
   //trg
-  trigger1=0,trigger2=0,trigger3=0,trigger4=0,trigger5=0,trigger6=0,trigger7=0,trigger8=0;
-  l1_seed1=0,l1_seed2=0,l1_seed3=0,l1_seed4=0,l1_seed5=0,l1_seed6=0;
-  l1met=0,l1met_phi=-99,l1ht=0,l1hf_met=0,l1hf_met_phi=-99;
+
+  hlt_mu7_ip4     = 0;
+  hlt_mu8_ip3     = 0;
+  hlt_mu8_ip5     = 0;
+  hlt_mu8_ip6     = 0;
+  hlt_mu8p5_ip3p5 = 0;
+  hlt_mu9_ip4     = 0;
+  hlt_mu9_ip5     = 0;
+  hlt_mu9_ip6     = 0;
+  hlt_mu10_ip3p5  = 0;
+  hlt_mu12_ip6    = 0 ;
+  l1_mu7er        = 0; 
+  l1_mu8er        = 0; 
+  l1_mu9er        = 0; 
+  l1_mu10er       = 0; 
+  l1_mu12er       = 0; 
+  l1_mu22         = 0;
   l1muon_eta.clear(); l1muon_pt.clear(); l1muon_phi.clear(); l1muon_qual.clear();
-  l1jet_pt.clear(); l1jet_phi.clear(); l1jet_eta.clear(); l1jet_iso.clear();
-  l1jet_qual.clear();
   tr1_obj_pt_eta_phi.clear(); tr2_obj_pt_eta_phi.clear(); 
   tr3_obj_pt_eta_phi.clear(); tr4_obj_pt_eta_phi.clear(); 
   tr5_obj_pt_eta_phi.clear(); tr6_obj_pt_eta_phi.clear();
@@ -153,25 +165,27 @@ void NtupleContent::SetNtupleVariables(TString Vars){
   t1->Branch("beam_x",&beam_x); 
   t1->Branch("beam_y",&beam_y);
   t1->Branch("beam_z",&beam_z); 
-  
+
   if (Lite || Flat){
     t1->Branch("vertex_x",&vertex_x); 
     t1->Branch("vertex_y",&vertex_y);
     t1->Branch("vertex_z",&vertex_z);
-    t1->Branch("HLT_path1",&trigger1); 
-    t1->Branch("HLT_path2",&trigger2);
-    t1->Branch("HLT_path3",&trigger3); 
-    t1->Branch("HLT_path4",&trigger4);
-    t1->Branch("HLT_path5",&trigger5); 
-    t1->Branch("HLT_path6",&trigger6);
-    t1->Branch("HLT_path7",&trigger7); 
-    t1->Branch("HLT_path8",&trigger8);
-    t1->Branch("L1_seed1",&l1_seed1); 
-    t1->Branch("L1_seed2",&l1_seed2);
-    t1->Branch("L1_seed3",&l1_seed3); 
-    t1->Branch("L1_seed4",&l1_seed4);
-    t1->Branch("L1_seed5",&l1_seed5); 
-    t1->Branch("L1_seed6",&l1_seed6);
+    t1->Branch("hlt_mu7_ip4",     &hlt_mu7_ip4    ); 
+    t1->Branch("hlt_mu8_ip3",     &hlt_mu8_ip3    );
+    t1->Branch("hlt_mu8_ip5",     &hlt_mu8_ip5    ); 
+    t1->Branch("hlt_mu8_ip6",     &hlt_mu8_ip6    );
+    t1->Branch("hlt_mu8p5_ip3p5", &hlt_mu8p5_ip3p5); 
+    t1->Branch("hlt_mu9_ip4",     &hlt_mu9_ip4    );
+    t1->Branch("hlt_mu9_ip5",     &hlt_mu9_ip5    ); 
+    t1->Branch("hlt_mu9_ip6",     &hlt_mu9_ip6    );
+    t1->Branch("hlt_mu10_ip3p5",  &hlt_mu10_ip3p5 );
+    t1->Branch("hlt_mu12_ip6",    &hlt_mu12_ip6   );
+    t1->Branch("l1_mu7er",  &l1_mu7er); 
+    t1->Branch("l1_mu8er",  &l1_mu8er);
+    t1->Branch("l1_mu9er",  &l1_mu9er); 
+    t1->Branch("l1_mu10er", &l1_mu10er);
+    t1->Branch("l1_mu12er", &l1_mu12er); 
+    t1->Branch("l1_mu22",   &l1_mu22  );
     t1->Branch("nmuon",&nmuons); 
     t1->Branch("muon_pt",&muon_pt);
     t1->Branch("muon_eta",&muon_eta); 
@@ -278,20 +292,23 @@ void NtupleContent::SetNtupleVariables(TString Vars){
   t1->Branch("vertex_chi",&vertex_chi); 
   t1->Branch("vertex_ndof",&vertex_ndof);
   //triggers
-  t1->Branch("HLT_path1",&trigger1); 
-  t1->Branch("HLT_path2",&trigger2);
-  t1->Branch("HLT_path3",&trigger3); 
-  t1->Branch("HLT_path4",&trigger4);
-  t1->Branch("HLT_path5",&trigger5); 
-  t1->Branch("HLT_path6",&trigger6);
-  t1->Branch("HLT_path7",&trigger7); 
-  t1->Branch("HLT_path8",&trigger8);
-  t1->Branch("L1_seed1",&l1_seed1); 
-  t1->Branch("L1_seed2",&l1_seed2);
-  t1->Branch("L1_seed3",&l1_seed3); 
-  t1->Branch("L1_seed4",&l1_seed4);
-  t1->Branch("L1_seed5",&l1_seed5); 
-  t1->Branch("L1_seed6",&l1_seed6);
+  t1->Branch("hlt_mu7_ip4",     &hlt_mu7_ip4    ); 
+  t1->Branch("hlt_mu8_ip3",     &hlt_mu8_ip3    );
+  t1->Branch("hlt_mu8_ip5",     &hlt_mu8_ip5    ); 
+  t1->Branch("hlt_mu8_ip6",     &hlt_mu8_ip6    );
+  t1->Branch("hlt_mu8p5_ip3p5", &hlt_mu8p5_ip3p5); 
+  t1->Branch("hlt_mu9_ip4",     &hlt_mu9_ip4    );
+  t1->Branch("hlt_mu9_ip5",     &hlt_mu9_ip5    ); 
+  t1->Branch("hlt_mu9_ip6",     &hlt_mu9_ip6    );
+  t1->Branch("hlt_mu10_ip3p5",  &hlt_mu10_ip3p5 );
+  t1->Branch("hlt_mu12_ip6",    &hlt_mu12_ip6   );
+
+  t1->Branch("l1_mu7er",  &l1_mu7er ); 
+  t1->Branch("l1_mu8er",  &l1_mu8er );
+  t1->Branch("l1_mu9er",  &l1_mu9er ); 
+  t1->Branch("l1_mu10er", &l1_mu10er);
+  t1->Branch("l1_mu12er", &l1_mu12er); 
+  t1->Branch("l1_mu22",   &l1_mu22  );
   t1->Branch("HLT1Obj_pt_eta_phi_charge",&tr1_obj_pt_eta_phi);
   t1->Branch("HLT2Obj_pt_eta_phi_charge",&tr2_obj_pt_eta_phi);
   t1->Branch("HLT3Obj_pt_eta_phi_charge",&tr3_obj_pt_eta_phi);
@@ -304,16 +321,6 @@ void NtupleContent::SetNtupleVariables(TString Vars){
   t1->Branch("l1muon_eta",&l1muon_eta);
   t1->Branch("l1muon_phi",&l1muon_phi); 
   t1->Branch("l1muon_qual",&l1muon_qual);
-  t1->Branch("l1jet_pt",&l1jet_pt); 
-  t1->Branch("l1jet_eta",&l1jet_eta);
-  t1->Branch("l1jet_phi",&l1jet_phi); 
-  t1->Branch("l1jet_iso",&l1jet_iso);
-  t1->Branch("l1jet_qual",&l1jet_qual); 
-  t1->Branch("l1met",&l1met);
-  t1->Branch("l1met_phi",&l1met_phi); 
-  t1->Branch("l1ht",&l1ht);
-  t1->Branch("l1hf_met",&l1hf_met); 
-  t1->Branch("l1hf_met_phi",&l1hf_met_phi);
   
   //gen
   if (writeGen){

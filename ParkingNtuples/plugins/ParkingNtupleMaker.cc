@@ -18,53 +18,56 @@
 
 // system include files
 #include <memory>
+#include <string>
 #include <iostream>
+#include <vector>
 // user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "DataFormats/Common/interface/Handle.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "CondFormats/DataRecord/interface/L1TUtmTriggerMenuRcd.h"
+#include "CondFormats/L1TObjects/interface/L1TUtmTriggerMenu.h"
+
+#include "DataFormats/Common/interface/AssociationMap.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/Ref.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/L1TGlobal/interface/GlobalAlgBlk.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
-#include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 #include "DataFormats/PatCandidates/interface/VIDCutFlowResult.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-#include "FWCore/Common/interface/TriggerNames.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/Math/interface/deltaR.h"
-#include "FWCore/PluginManager/interface/ModuleDef.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Common/interface/AssociationMap.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/ParametrizedEngine/src/OAEParametrizedMagneticField.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+
+#include "TrackingTools/PatternTools/interface/ClosestApproachInRPhi.h"
 #include "TrackingTools/PatternTools/interface/TwoTrackMinimumDistance.h"
-#include <vector>
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+
 #include "TTree.h"
 #include "TMath.h"
-#include <string>
-#include <iostream>
-#include "DataFormats/Common/interface/Ref.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-#include "TrackingTools/PatternTools/interface/ClosestApproachInRPhi.h"
 #include "TLorentzVector.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "CondFormats/DataRecord/interface/L1TUtmTriggerMenuRcd.h"
-#include "CondFormats/L1TObjects/interface/L1TUtmTriggerMenu.h"
-#include "DataFormats/L1TGlobal/interface/GlobalAlgBlk.h"
-#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
+
 #include "TripleTrackKinFit.h"
 #include "GeneratorBTree.h"
 #include "NtupleContent.h"
@@ -87,7 +90,7 @@ using namespace std;
 // from  edm::one::EDAnalyzer<> and also remove the line from
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
-class ParkingNtupleMaker : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
+class ParkingNtupleMaker : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns>  {
 
 public:
   explicit ParkingNtupleMaker(const edm::ParameterSet&);
@@ -98,30 +101,29 @@ public:
   
 private:
   virtual void beginJob() override;
+  void         beginRun(edm::Run const& iEvent, edm::EventSetup const&) ;
   virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+  void         endRun(edm::Run const& iEvent, edm::EventSetup const&){};
   virtual void endJob() override;
+//   virtual void beginRun(const edm::Run &, const edm::EventSetup &);
+
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
-  float Dphi(float phi1,float phi2);
-  float DR(float eta1,float phi1,float eta2, float phi2);
 
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
   edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
   edm::EDGetToken muonsToken_;
-  edm::EDGetToken jetsToken_;
-  edm::EDGetToken metToken_;
 //  edm::EDGetToken photonToken_;
   edm::EDGetToken PFCands_;
   edm::EDGetToken LostTracks_;
   edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
-  edm::EDGetToken l1JetsToken_;
-  edm::EDGetToken l1MetToken_;
   vector<string> Seed_;
   edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
   edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
   vector<string> HLTPath_;
+  HLTPrescaleProvider hltPrescaleProvider_;
   edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
   edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
 
@@ -192,7 +194,9 @@ private:
   int nmupfpairs=0;
   reco::TrackBase::Point vertex_point;
 
- TString * algoBitToName = new TString[512];
+  TString * algoBitToName = new TString[512];
+  l1t::L1TGlobalUtil *fGtUtil;
+
       // ----------member data ---------------------------
 };
 
@@ -204,20 +208,17 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   vtxToken_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
   electronsToken_(consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))),
   muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
-  jetsToken_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>  ("jets"))),
-  metToken_(consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("met"))),
 // photonToken_(consumes<std::vector<pat::Photon>>(iConfig.getParameter<edm::InputTag>("photons"))),
   PFCands_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("PFCands"))),
   LostTracks_(consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("losttracks"))),
 // Tracks_(consumes<std::vector<reco::Track> >(iConfig.getParameter<edm::InputTag>("tracks"))),
   l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
   l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
-  l1JetsToken_(consumes<l1t::JetBxCollection>(iConfig.getParameter<edm::InputTag>("l1jets"))),
-  l1MetToken_(consumes<BXVector<l1t::EtSum> >(iConfig.getParameter<edm::InputTag>("l1met"))),
   Seed_(iConfig.getParameter<vector<string> >("Seed")),
   trgresultsToken_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag> ("triggerresults"))),
   trigobjectsToken_(consumes<vector<pat::TriggerObjectStandAlone>>(iConfig.getParameter<edm::InputTag> ("triggerobjects"))),
   HLTPath_(iConfig.getParameter<vector<string> >("HLTPath")),
+  hltPrescaleProvider_ (iConfig, consumesCollector(), *this),
   prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
   packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed")))
 {
@@ -267,6 +268,14 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
   DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
   PtBminCut=runParameters.getParameter<double>("PtBminCut");
+  
+//   fGtUtil = new l1t::L1TGlobalUtil(iConfig, 
+//                                 consumesCollector(), 
+//                                 *this, 
+//                                 iConfig.getParameter<edm::InputTag>("l1results"), 
+//                                 iConfig.getParameter<edm::InputTag>("l1results")
+//                                 );
+//   
 }
 
 ParkingNtupleMaker::~ParkingNtupleMaker()
@@ -281,19 +290,6 @@ ParkingNtupleMaker::~ParkingNtupleMaker()
 //
 
 // ------------ method called for each event  ------------
-
-float ParkingNtupleMaker::Dphi(float phi1,float phi2){
-  float result = phi1 - phi2;
-  while (result > float(M_PI)) result -= float(2*M_PI);
-  while (result <= -float(M_PI)) result += float(2*M_PI);
-  return result;
-}
-
-float ParkingNtupleMaker::DR(float eta1,float phi1,float eta2, float phi2){
-  return TMath::Sqrt((eta1-eta2)*(eta1-eta2)+Dphi(phi1,phi2)*Dphi(phi1,phi2));
-}
-
-
 
 std::vector<std::vector<float>> ParkingNtupleMaker::track_DCA(std::vector<reco::TransientTrack> ttks) {
   std::vector<std::vector<float>> dca;
@@ -364,18 +360,15 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   if (vertices->size()==0) return;
   edm::Handle<std::vector<pat::Electron>> electrons;
   iEvent.getByToken(electronsToken_, electrons); 
-  edm::Handle<std::vector<pat::Jet>> jets;
-  iEvent.getByToken(jetsToken_, jets);
   edm::Handle<std::vector<pat::Muon>> muons;
   iEvent.getByToken(muonsToken_,muons);
-  edm::Handle<std::vector<pat::MET>> met;
-  iEvent.getByToken(metToken_,met);
   edm::Handle<vector<pat::PackedCandidate>> tracks1;
   iEvent.getByToken(PFCands_, tracks1);
   edm::Handle<vector<pat::PackedCandidate>> tracks2;
   iEvent.getByToken(LostTracks_, tracks2);
   edm::ESHandle<MagneticField> bFieldHandle;
   iSetup.get<IdealMagneticFieldRecord>().get(bFieldHandle);
+
   edm::Handle<GlobalAlgBlkBxCollection> l1result;
   iEvent.getByToken(l1resultToken_,l1result);
   if (count==0){
@@ -391,6 +384,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       count++;
     }
   }
+
   //clear
   footprint.clear();
   nt.ClearVariables();
@@ -453,26 +447,9 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 //   const pat::MET &theMet = met->front();
 //   nt.ptmet=theMet.et(); nt.phimet=theMet.phi();
 // 
-//   for (const pat::Jet &jet : *jets){
-//     if (fabs(jet.eta())>2.5) continue;
-//     nt.jet_pt.push_back(jet.pt()); nt.jet_eta.push_back(jet.eta());
-//     nt.jet_phi.push_back(jet.phi());
-//     nt.jet_cEmEF.push_back(jet.chargedEmEnergyFraction());
-//     nt.jet_cHEF.push_back(jet.chargedHadronEnergyFraction());
-//     nt.jet_cHMult.push_back(jet.chargedHadronMultiplicity());
-//     nt.jet_cMuEF.push_back(jet.chargedMuEnergyFraction());
-//     nt.jet_cMult.push_back(jet.chargedMultiplicity());
-//     nt.jet_MuEF.push_back(jet.muonEnergyFraction());
-//     nt.jet_eEF.push_back(jet.electronEnergyFraction());
-//     nt.jet_nEmEF.push_back(jet.neutralEmEnergyFraction());
-//     nt.jet_nHEF.push_back(jet.neutralHadronEnergyFraction());
-//     nt.jet_nMult.push_back(jet.neutralMultiplicity());
-//     nt.jet_pEF.push_back(jet.photonEnergyFraction());
-//     nt.njets++;
-//   }
 
    std::pair<float,float> EtaPhiE1(-10,-10),EtaPhiE2(-10,-10),EtaPhiK(-10,-10);
-   if(!data){
+   if(! iEvent.isRealData() ){
      GeneratorBTree gen(prunedGenToken_,packedGenToken_,iEvent);
      gen.Fill(nt);
      if (UseDirectlyGenBeeK){
@@ -485,28 +462,28 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
    if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) return;
   
   
-  //save trigger related informationx
+  //save trigger related information
   
   //find max
   std::pair<float,float> TrgMu_EtaPhi(-100,-100);
   if (saveHLT || saveL1){
-    HLTL1tree trigger(iEvent, l1resultToken_, l1MuonsToken_, l1JetsToken_, l1MetToken_, trgresultsToken_, trigobjectsToken_);
+    HLTL1tree trigger(iEvent, l1resultToken_, l1MuonsToken_, trgresultsToken_, trigobjectsToken_);
     if (saveL1){ 
-      trigger.L1objetcs(nt);
-      trigger.L1trigger(algoBitToName,Seed_);
+      trigger.L1objects(nt);
+      trigger.L1trigger(algoBitToName,Seed_); 
       trigger.FillL1(nt);
     }
     if (saveHLT){
-      trigger.HLTtrigger(HLTPath_);
+      trigger.HLTtrigger(HLTPath_, hltPrescaleProvider_); 
       trigger.HLTobjects(HLTPath_);
       if (saveOnlyHLTFires && !trigger.HLTPathFire()) return;
-      trigger.FillHLT(nt);
+      trigger.FillHLT(nt); 
       trigger.FillObj(nt);
       if (trigger.HLTPathFire())
         TrgMu_EtaPhi=std::make_pair(trigger.GetHighestPtHLTObject()[1],trigger.GetHighestPtHLTObject()[2]);
     }
   } 
-  //  cout<<"here trg"<<endl;
+//    cout<<"here trg"<<endl;
   nevts++;
 
   //  save offline muons (all or saveOnlyHLTFires)
@@ -537,8 +514,8 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.muon_loose.push_back(mu.isLooseMuon());
     nt.muon_tight.push_back(mu.isTightMuon(firstGoodVertex));
     nt.muon_soft.push_back(mu.isSoftMuon(firstGoodVertex));
-    if (DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi())<DRtrgMu){
-      DRtrgMu=DR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi());
+    if (deltaR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi())<DRtrgMu){
+      DRtrgMu=deltaR(TrgMu_EtaPhi.first,TrgMu_EtaPhi.second,mu.eta(),mu.phi());
       TrgmuDz=mu.vz();  
       nt.muon_trgIndex=nt.nmuons;
     }
@@ -550,7 +527,6 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   }
   if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) return;
     
-  
   //electrons  
   trigger::size_type eindex=-1; 
   for(const pat::Electron &el : *electrons){
@@ -585,7 +561,6 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
     nt.nel++;
   }
-   
   //save tracks
   for (const pat::PackedCandidate &trk : *tracks1) {
     if (!trk.trackHighPurity()) continue;
@@ -607,15 +582,15 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (fabs(trk.eta())>EtaTrk_Cut) continue;
       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
       if (UseDirectlyGenBeeK){
-        if (DR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
+        if (deltaR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
       } 
       bool isMu=false;
       bool isE=false;
       for (const pat::Muon & mu :*muons){
-        if (DR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
+        if (deltaR(mu.eta(),mu.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone) isMu=true; 
       }
       for (const pat::Electron & el : *electrons) {     
-        if (DR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
+        if (deltaR(el.eta(),el.phi(),trk.eta(),trk.phi())<LepTrkExclusionCone)
           isE=true;
       }
      
@@ -668,9 +643,9 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   //e pairs
   if(AddeeK || OnlyKee ){
     for(int iel=0; iel<nt.nel; ++iel){
-      if (UseDirectlyGenBeeK && !data){
-        if ( DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
-             DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone) 
+      if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
+        if ( deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
+             deltaR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone) 
              continue;
       }
       for (int iel2=iel+1; iel2<nt.nel; ++iel2){
@@ -678,9 +653,9 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         if (nt.el_pt[iel2] < Electron1PtCut && \
             nt.el_pt[iel]  < Electron1PtCut) 
             continue;
-        if (UseDirectlyGenBeeK && !data){
-          if (DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
-              DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
+        if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
+          if (deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
+              deltaR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
               continue;
         }
         if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
@@ -750,19 +725,19 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (ptrk.pt() < track_pt_cut_forB) continue;
       if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
       if (UseDirectlyGenBeeK){
-        if (DR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
-           continue;
+        if (deltaR(EtaPhiK.first,EtaPhiK.second,ptrk.eta(),ptrk.phi())>DRgenCone)
+   	      continue;
       }
       if (fabs(TrgmuDz-trk.vz())>ElectronDzCut) continue;
       bool isMu = false; 
       bool isE  = false;
       for (const pat::Muon & mu : *muons){
-        if (DR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+        if (deltaR(mu.eta(),mu.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
         isMu=true; 
       }
       // sara: don't understand
       for (const pat::Electron & el: *electrons) {     
-        if (DR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
+        if (deltaR(el.eta(),el.phi(),ptrk.eta(),ptrk.phi())<LepTrkExclusionCone) 
           isE=true;
       } 
       if(isMu || isE ) continue;
@@ -901,6 +876,24 @@ ParkingNtupleMaker::endJob()
     }
   }
 }
+
+// -------------------------------------
+void ParkingNtupleMaker::beginRun( edm::Run const& run,  edm::EventSetup const& iSetup) {
+
+  bool changed(true);
+  if (hltPrescaleProvider_.init(run,iSetup,"HLT",changed)) {
+    // if init returns TRUE, initialisation has succeeded!
+    if (changed) {
+      // The HLT config has actually changed wrt the previous Run
+      std::cout << "Initalizing HLTConfigProvider"  << std::endl;
+    }
+  } 
+  else {
+    std::cout << " HLT config extraction failure with process name HLT" << std::endl;
+  }
+}
+
+
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
