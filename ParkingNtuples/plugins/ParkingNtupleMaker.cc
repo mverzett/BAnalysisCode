@@ -18,53 +18,56 @@
 
 // system include files
 #include <memory>
+#include <string>
 #include <iostream>
+#include <vector>
 // user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "DataFormats/Common/interface/Handle.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
-#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "CondFormats/DataRecord/interface/L1TUtmTriggerMenuRcd.h"
+#include "CondFormats/L1TObjects/interface/L1TUtmTriggerMenu.h"
+
+#include "DataFormats/Common/interface/AssociationMap.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/Ref.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/L1TGlobal/interface/GlobalAlgBlk.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
-#include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 #include "DataFormats/PatCandidates/interface/VIDCutFlowResult.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-#include "FWCore/Common/interface/TriggerNames.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/Math/interface/deltaR.h"
-#include "FWCore/PluginManager/interface/ModuleDef.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Common/interface/AssociationMap.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/ParametrizedEngine/src/OAEParametrizedMagneticField.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+
+#include "TrackingTools/PatternTools/interface/ClosestApproachInRPhi.h"
 #include "TrackingTools/PatternTools/interface/TwoTrackMinimumDistance.h"
-#include <vector>
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+
 #include "TTree.h"
 #include "TMath.h"
-#include <string>
-#include <iostream>
-#include "DataFormats/Common/interface/Ref.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-#include "TrackingTools/PatternTools/interface/ClosestApproachInRPhi.h"
 #include "TLorentzVector.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "CondFormats/DataRecord/interface/L1TUtmTriggerMenuRcd.h"
-#include "CondFormats/L1TObjects/interface/L1TUtmTriggerMenu.h"
-#include "DataFormats/L1TGlobal/interface/GlobalAlgBlk.h"
-#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
+
 #include "TripleTrackKinFit.h"
 #include "GeneratorBTree.h"
 #include "NtupleContent.h"
@@ -88,7 +91,8 @@ using namespace std;
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
 template<typename T1>
-class ParkingNtupleMakerT : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
+class ParkingNtupleMakerT : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns>  {
+// class ParkingNtupleMakerT : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
   typedef std::vector<T1> T1Collection;
   typedef edm::Ref<T1Collection> T1Ref;
@@ -103,8 +107,12 @@ public:
   
 private:
   virtual void beginJob() override;
+  void         beginRun(edm::Run const& iEvent, edm::EventSetup const&) ;
   virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+  void         endRun(edm::Run const& iEvent, edm::EventSetup const&){};
   virtual void endJob() override;
+//   virtual void beginRun(const edm::Run &, const edm::EventSetup &);
+
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
 
@@ -127,12 +135,11 @@ private:
   edm::EDGetTokenT<edm::ValueMap<float> > eleUnBWPToken_;
   edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
-  edm::EDGetToken l1JetsToken_;
-  edm::EDGetToken l1MetToken_;
   vector<string> Seed_;
   edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
   edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
   vector<string> HLTPath_;
+  HLTPrescaleProvider hltPrescaleProvider_;
   edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
   edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
 
@@ -210,7 +217,9 @@ private:
   int nmupfpairs=0;
   reco::TrackBase::Point vertex_point;
 
- TString * algoBitToName = new TString[512];
+  TString * algoBitToName = new TString[512];
+  l1t::L1TGlobalUtil *fGtUtil;
+
       // ----------member data ---------------------------
 };
 
@@ -239,12 +248,11 @@ ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig):
   eleUnBWPToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("eleUnbiasedWP"))),
   l1resultToken_(consumes<GlobalAlgBlkBxCollection>(iConfig.getParameter<edm::InputTag>("l1seed"))),
   l1MuonsToken_(consumes<l1t::MuonBxCollection>(iConfig.getParameter<edm::InputTag>("l1muons"))),
-  l1JetsToken_(consumes<l1t::JetBxCollection>(iConfig.getParameter<edm::InputTag>("l1jets"))),
-  l1MetToken_(consumes<BXVector<l1t::EtSum> >(iConfig.getParameter<edm::InputTag>("l1met"))),
   Seed_(iConfig.getParameter<vector<string> >("Seed")),
   trgresultsToken_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag> ("triggerresults"))),
   trigobjectsToken_(consumes<vector<pat::TriggerObjectStandAlone>>(iConfig.getParameter<edm::InputTag> ("triggerobjects"))),
   HLTPath_(iConfig.getParameter<vector<string> >("HLTPath")),
+  hltPrescaleProvider_ (iConfig, consumesCollector(), *this),
   prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
   packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed")))
 {
@@ -300,6 +308,14 @@ ParkingNtupleMakerT<T1>::ParkingNtupleMakerT(const edm::ParameterSet& iConfig):
   RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
   DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
   PtBminCut=runParameters.getParameter<double>("PtBminCut");
+  
+//   fGtUtil = new l1t::L1TGlobalUtil(iConfig, 
+//                                 consumesCollector(), 
+//                                 *this, 
+//                                 iConfig.getParameter<edm::InputTag>("l1results"), 
+//                                 iConfig.getParameter<edm::InputTag>("l1results")
+//                                 );
+//   
 }
 
 template<typename T1>
@@ -406,6 +422,7 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   iEvent.getByToken( eleUnBWPToken_ ,ele_mva_wp_unbiased);
   edm::ESHandle<MagneticField> bFieldHandle;
   iSetup.get<IdealMagneticFieldRecord>().get(bFieldHandle);
+
   edm::Handle<GlobalAlgBlkBxCollection> l1result;
   iEvent.getByToken(l1resultToken_,l1result);
   if (count==0){
@@ -420,6 +437,7 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       count++;
     }
   }
+
   //clear
   footprint.clear(); nt.ClearVariables(); PFe_EtaPhi.clear(); ettks.clear();
   muttks.clear(); KTrack.clear(); KTrack_index.clear(); tracks.clear();
@@ -472,25 +490,28 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
    if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) return;
   
   
-  //save trigger related informationx
+  //save trigger related information
   
   //find max
   std::pair<float,float> TrgMu_EtaPhi(-100,-100);
   if (saveHLT || saveL1){
-    HLTL1tree trigger(iEvent, l1resultToken_, l1MuonsToken_, l1JetsToken_, l1MetToken_, trgresultsToken_, trigobjectsToken_);
+    HLTL1tree trigger(iEvent, l1resultToken_, l1MuonsToken_, trgresultsToken_, trigobjectsToken_);
     if (saveL1){ 
-      trigger.L1objetcs(nt);
-      trigger.L1trigger(algoBitToName,Seed_); trigger.FillL1(nt);
+      trigger.L1objects(nt);
+      trigger.L1trigger(algoBitToName,Seed_); 
+      trigger.FillL1(nt);
     }
     if (saveHLT){
-      trigger.HLTtrigger(HLTPath_); trigger.HLTobjects(HLTPath_);
+      trigger.HLTtrigger(HLTPath_, hltPrescaleProvider_); 
+      trigger.HLTobjects(HLTPath_);
       if (saveOnlyHLTFires && !trigger.HLTPathFire()) return;
-      trigger.FillHLT(nt); trigger.FillObj(nt);
+      trigger.FillHLT(nt); 
+      trigger.FillObj(nt);
       if (trigger.HLTPathFire())
         TrgMu_EtaPhi=std::make_pair(trigger.GetHighestPtHLTObject()[1],trigger.GetHighestPtHLTObject()[2]);
     }
   } 
-  //  cout<<"here trg"<<endl;
+//    cout<<"here trg"<<endl;
   nevts++;
 
   //  save offline muons (all or saveOnlyHLTFires)
@@ -532,7 +553,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
   }
   if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) return;
     
-  
   //electrons  
   trigger::size_type eindex=-1; 
   for(const pat::Electron &el : *electrons){
@@ -580,7 +600,6 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
     if (CombineElCol)  PFe_EtaPhi.emplace_back(eta,phi);
   }
 
-   
   //save low pt electrons
   if (CombineElCol){
     for(const pat::Electron &el : *lowpte)
@@ -963,6 +982,25 @@ ParkingNtupleMakerT<T1>::endJob()
     }
   }
 }
+
+// -------------------------------------
+template<typename T1>
+void ParkingNtupleMakerT<T1>::beginRun( edm::Run const& run,  edm::EventSetup const& iSetup) {
+
+  bool changed(true);
+  if (hltPrescaleProvider_.init(run,iSetup,"HLT",changed)) {
+    // if init returns TRUE, initialisation has succeeded!
+    if (changed) {
+      // The HLT config has actually changed wrt the previous Run
+      std::cout << "Initalizing HLTConfigProvider"  << std::endl;
+    }
+  } 
+  else {
+    std::cout << " HLT config extraction failure with process name HLT" << std::endl;
+  }
+}
+
+
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 template<typename T1>
