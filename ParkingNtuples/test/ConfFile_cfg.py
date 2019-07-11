@@ -1,12 +1,22 @@
 import FWCore.ParameterSet.Config as cms
 #quick config
 
+selections = cms.PSet(
+  electrons = cms.PSet(
+    low_pt_collection = cms.InputTag('slimmedLowPtElectrons'),
+    low_pt_selection = cms.string('gsfTrack().ptMode() >= 0.5 && passConversionVeto() && electronID("unbiased_seed") >= -4'), #FIXME: add abs(eta) < 2.5
+    pf_collection = cms.InputTag('slimmedElectrons'),
+    pf_selection = cms.string("passConversionVeto()"), #FIXME: add abs(eta) < 2.5
+    cross_cleaning_cone = cms.double(0.03),
+    cross_cleaning_dz = cms.double(0.7),
+  )
+)
 
 IsData=True
-Run="A"
+Run="B"
 Nentries=100;  
 output="output_flat.root"; 
-mlog=100; 
+mlog=1; 
 saveTrk=False; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
 
@@ -15,11 +25,6 @@ ElectronsOnly = True;
 
 
 TrgMuCone=0.1
-UseLowpTe=False; 
-LowPtElCollection=False; 
-CombinePFLowPtEl=True;
-LowPtGsfTrkCollection=False; 
-PFelCollection=False;
 elcuts=dict(El1Pt=1.5,El2Pt=0.5,Dz=0.7,DzeeMax=1.0,El1WP=3,El2WP=-4,PFLowPtCone=0.03)
 EtaCut=2.5; 
 TrkPtCut=0.8; 
@@ -36,27 +41,14 @@ Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
 # '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
 #'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
-'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+#'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root'
 ]
 ############ for debug evt 1242 run 1 ls 13
  #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
  #  eventsToProcess=cms.untracked.VEventRange('317696:399:MIN-317696:399:MAX')
 
 ##########
-electron_container="slimmedElectrons"
-if UseLowpTe:
-  print "Low pT e collection instead of PF e."
-  electron_container="slimmedLowPtElectrons"
-
-electron_container2="slimmedElectrons"
-if CombinePFLowPtEl or UseLowpTe or LowPtElCollection or LowPtGsfTrkCollection:
-  electron_container2="slimmedLowPtElectrons"
-
-if CombinePFLowPtEl and UseLowpTe:
-  print "requested to use low pT as complementary and primary collection -> impossible, using PF as primary"
-if CombinePFLowPtEl:
-  print "Both collection of e will be used."   
-
 if RecoBtoKLepLep : 
    print "reconstructing B->K(J/psi)ll channel"
 if RecoBtoKstarLepLep :
@@ -133,32 +125,37 @@ process.source = cms.Source("PoolSource",
 #taskB0.add(process.selectedPFCandidatesHP)
 
 
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
-dataFormat = DataFormat.MiniAOD
-switchOnVIDElectronIdProducer(process, dataFormat)
-my_id_modules = [
-        'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff', 
- 'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff', 
-]
-for idmod in my_id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+## NO NEED!
+## from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+## dataFormat = DataFormat.MiniAOD
+## switchOnVIDElectronIdProducer(process, dataFormat)
+## my_id_modules = [
+##         'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff', 
+##  'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff', 
+## ]
+## for idmod in my_id_modules:
+##     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
+process.ntuplesSeq = cms.Sequence(
+  #process.egmGsfElectronIDSequence
+)
+
+process.load('BAnalysisCode/ParkingNtuples/electrons_cfi')
+process.lowptElectronsWithSeed.src = selections.electrons.low_pt_collection
+process.lowptElectronsForAnalysis.cut = selections.electrons.low_pt_selection
+process.pfElectronsForAnalysis.src = selections.electrons.pf_collection
+process.pfElectronsForAnalysis.cut = selections.electrons.pf_selection
+process.electronsForAnalysis.drForCleaning = selections.electrons.cross_cleaning_cone
+process.electronsForAnalysis.dzForCleaning = selections.electrons.cross_cleaning_dz
+
+
+process.ntuplesSeq *= process.electrons
 
 process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
-                              electrons      = cms.InputTag(electron_container),
-                              lowptElectrons = cms.InputTag(electron_container2),
-                              lowptGsftracks = cms.InputTag("lowPtGsfEleGsfTracks"),
-                              pfElectrons    = cms.InputTag("slimmedElectrons"),
+                              electrons      = cms.InputTag('electronsForAnalysis'),
                               vertices       = cms.InputTag("offlineSlimmedPrimaryVertices"),
                               photons        = cms.InputTag("slimmedPhotons"),
-                              eleIdMapVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                              eleIdMapSoft   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose"),
-                              eleIdMapMedium = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp90"),
-                              eleIdMapTight   = cms.InputTag("egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp80"),
-                              eleIdMapValue  = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Categories"),
-                              eleBiasedWP    = cms.InputTag("lowPtGsfElectronSeedValueMaps","ptbiased","RECO"),
-                              eleUnbiasedWP  = cms.InputTag("lowPtGsfElectronSeedValueMaps","unbiased","RECO"),
                               #If you want no L1_Seed, write "default" in the first element and the tree will write the value -100
                               Seed           = cms.vstring("L1_SingleMu7er1p5",
                                                            "L1_SingleMu8er1p5",
@@ -211,7 +208,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       ElectronDzCut=cms.double(elcuts["Dz"]), 
       DzeeMaxCut=cms.double(elcuts["DzeeMax"]),
       TrgConeCut=cms.double(TrgMuCone), 
-      IsLowpTE=cms.bool(UseLowpTe), 
       MVAEl1Cut=cms.double(elcuts["El1WP"]),
       MVAEl2Cut=cms.double(elcuts["El2WP"]),
       PointingConstraint=cms.bool(False),
@@ -228,8 +224,6 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       PtBminCut=cms.double(Bcuts["PtMin"]),
       CosThetaCut=cms.double(Bcuts["Cos"]),
       ProbBMuMuKcut=cms.double(Bcuts["Prob"]), 
-      CombineElCol=cms.bool(CombinePFLowPtEl),
-      CombineCone=cms.double(elcuts["PFLowPtCone"]),
       MKstarMin_Cut=cms.double(0.742),
       MKstarMax_Cut=cms.double(1.042),
       LepTrkExclusionCone=cms.double(0.005),
@@ -243,12 +237,10 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       LepIdToMatch=cms.int32(Bdecaymatch["LepId"]),
       KIdToMatch=cms.int32(Bdecaymatch["KId"]),
       IsResonantDecayToMatch=cms.bool(Bdecaymatch["Jtoll"]),
-      AddLowPtElAsCol=cms.bool(LowPtElCollection),
-      AddLowGsfTrkAsCol=cms.bool(LowPtGsfTrkCollection),
-      AddPFElAsCol=cms.bool(PFelCollection),
       NtupleOutputClasses=cms.string(NtupleClasses)
   ),
 )
+process.ntuplesSeq *= process.demo
 
 process.load( "HLTrigger.HLTanalyzers.hlTrigReport_cfi" )
 process.options = cms.untracked.PSet(
@@ -269,8 +261,8 @@ process.fevt = cms.OutputModule("PoolOutputModule",
 
 #process.p = cms.Path(process.egmGsfElectronIDSequence)#* process.demo)
 process.p = cms.Path(
-   process.egmGsfElectronIDSequence   
-   +process.demo
+   #process.egmGsfElectronIDSequence   
+   process.ntuplesSeq
    #+process.hlTrigReport
   
    )
