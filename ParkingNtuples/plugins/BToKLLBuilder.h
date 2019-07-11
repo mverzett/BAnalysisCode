@@ -6,6 +6,9 @@
 
  */
 
+#ifndef BAnalysisCode_ParkingNtuples_BToKLLBuilder
+#define BAnalysisCode_ParkingNtuples_BToKLLBuilder
+
 #include "DiLeptonBuilder.h"
 #include <vector>
 #include <memory>
@@ -29,7 +32,7 @@ public:
   ~BToKLLBuilder() {}
 
   // Nothing is const here as we modify everything
-  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CahcedTrackCollection&, DiLeptonCache &) const;
+  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedTrackCollection&, DiLeptonCache &) const;
 
 private:
   const DiLeptonBuilder<Lepton, Fitter> ll_builder_;
@@ -39,7 +42,7 @@ private:
 };
 
 template<typename Lepton, typename Fitter>
-BToKLLBuilder::BToKLLBuilder(const edm::ParameterSet& cfg):
+BToKLLBuilder<Lepton, Fitter>::BToKLLBuilder(const edm::ParameterSet& cfg):
   ll_builder_{cfg},
   k_selection_{cfg.getParameter<std::string>("kSelection")},
   candidate_pre_vtx_selection_{cfg.getParameter<std::string>("candidatePreVtxSelection")},
@@ -47,8 +50,8 @@ BToKLLBuilder::BToKLLBuilder(const edm::ParameterSet& cfg):
 
 template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
-BToKLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& tracks, DiLeptonCache &cache) const {
-  auto ret_val = std::make_unique(pat::CompositeCandidateCollection);
+BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedTrackCollection& tracks, DiLeptonCache &cache) const {
+  auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
 
@@ -109,4 +112,4 @@ BToKLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& tracks, D
   return std::move(ret_val);
 }
 
-  
+#endif  

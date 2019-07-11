@@ -76,7 +76,11 @@
 #include "HLTL1tree.h"
 #include "BKlldecay.h"
 #include "BKstarlldecay.h"
-#include "helper.h"
+
+#include "helpers.h"
+#include "DiLeptonBuilder.h"
+#include "BToKLLBuilder.h"
+//#include "BToKStarLLBuilder.h"
 
 using namespace std;
 

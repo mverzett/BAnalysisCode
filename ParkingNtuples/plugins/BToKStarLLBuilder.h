@@ -6,6 +6,9 @@
 
  */
 
+#ifndef BAnalysisCode_ParkingNtuples_BToKStarLLBuilder
+#define BAnalysisCode_ParkingNtuples_BToKStarLLBuilder
+
 #include "DiLeptonBuilder.h"
 #include <vector>
 #include <memory>
@@ -50,7 +53,7 @@ BToKStarLLBuilder::BToKStarLLBuilder(const edm::ParameterSet& cfg):
 template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
 BToKStarLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& tracks, DiLeptonCache &cache) const {
-  auto ret_val = std::make_unique(pat::CompositeCandidateCollection);
+  auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
 
@@ -120,4 +123,4 @@ BToKStarLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& track
   return std::move(ret_val);
 }
 
-  
+#endif  
