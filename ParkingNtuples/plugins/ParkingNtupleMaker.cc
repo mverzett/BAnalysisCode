@@ -80,7 +80,7 @@
 #include "helpers.h"
 #include "DiLeptonBuilder.h"
 #include "BToKLLBuilder.h"
-//#include "BToKStarLLBuilder.h"
+#include "BToKStarLLBuilder.h"
 
 using namespace std;
 
@@ -114,21 +114,28 @@ private:
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
 
-  edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
-  edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
-  edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
-  edm::EDGetTokenT<pat::PackedCandidateCollection> tracksToken_;
+  const edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
+  const edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
+  const edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
+  const edm::EDGetTokenT<pat::PackedCandidateCollection> tracksToken_;
   edm::EDGetToken muonsToken_;
 //  edm::EDGetToken photonToken_;
-  edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
+  const edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
   vector<string> Seed_;
-  edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
-  edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
+  const edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
+  const edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
   vector<string> HLTPath_;
   HLTPrescaleProvider hltPrescaleProvider_;
-  edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
-  edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
+  const edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
+  const edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
+
+  // Candidate builders
+  const BToKLLBuilder<CachedMuon, KinFitter> bmumu_builder_;
+  const BToKLLBuilder<CachedElectron, KinFitter> bmumu_builder_;
+  const BToKStarLLBuilder<CachedMuon, KinFitter> bmumu_builder_;
+  const BToKStarLLBuilder<CachedElectron, KinFitter> bmumu_builder_;
+
 
   edm::Service<TFileService> fs;
   TTree * t1; 
@@ -483,6 +490,24 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   } 
 //    cout<<"here trg"<<endl;
   nevts++;
+  
+  // Stores to keep the objects we care about
+  // We are not going to access them directly from here often
+  std::vector<pat::Muon> muon_store;
+  std::vector<pat::Electron> electron_store;
+  std::vector<pat::PackedCandidate> candidate_store;
+  std::vector<reco::TransientTrack> ttrack_store;
+  
+  // Support collections for the objects, they contain pointers
+  // to the vectors above, in an orderly fashion
+  CachedMuonCollection cached_muons;
+  CachedElectronCollection cached_electrons;
+  CachedCandidateCollection cached_candidates;
+  
+  // Di-lepton caches (to be used later when building the B candidates)
+  // the key is the index of the two leptons
+  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > dimu_cache;
+  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > diel_cache;
 
   //  save offline muons (all or saveOnlyHLTFires)
   for (const pat::Muon &mu : *muons){    

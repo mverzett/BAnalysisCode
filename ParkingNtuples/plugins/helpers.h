@@ -11,6 +11,7 @@
 #include "RecoVertex/KinematicFitPrimitives/interface/ParticleMass.h" //just a typedef to double -.-'
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include <vector>
 
 template<typename T>
@@ -25,11 +26,11 @@ struct ChachedObject {
 
 typedef ChachedObject<pat::Muon> CachedMuon;
 typedef ChachedObject<pat::Electron> CachedElectron;
-typedef ChachedObject<reco::Track> CachedTrack;
+typedef ChachedObject<pat::PackedCandidate> CachedCandidate;
 
 typedef std::vector<CachedMuon> CachedMuonCollection;
 typedef std::vector<CachedElectron> CachedElectronCollection;
-typedef std::vector<CachedTrack> CachedTrackCollection;
+typedef std::vector<CachedCandidate> CachedCandidateCollection;
 
 constexpr double LEP_SIGMA = 0.0000001;
 constexpr double K_MASS = 0.493677;

@@ -32,11 +32,11 @@ public:
   ~BToKLLBuilder() {}
 
   // Nothing is const here as we modify everything
-  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedTrackCollection&, DiLeptonCache &) const;
+  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
 
 private:
   const DiLeptonBuilder<Lepton, Fitter> ll_builder_;
-  const StringCutObjectSelector<reco::Track> k_selection_; // cut on sub-leading lepton
+  const StringCutObjectSelector<pat::PackedCandidate> k_selection_; // cut on sub-leading lepton
   const StringCutObjectSelector<pat::CompositeCandidate> candidate_pre_vtx_selection_; // cut on the candidate before the SV fit
   const StringCutObjectSelector<pat::CompositeCandidate> candidate_post_vtx_selection_; // cut on the candidate after the SV fit
 };
@@ -50,7 +50,7 @@ BToKLLBuilder<Lepton, Fitter>::BToKLLBuilder(const edm::ParameterSet& cfg):
 
 template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
-BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedTrackCollection& tracks, DiLeptonCache &cache) const {
+BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
   auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
@@ -85,7 +85,7 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedTrackColle
       Fitter fitter(
         {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, track.transient_track},
         {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS},
-        {LEP_SIGMA, LEP_SIGMA, K_SIGMA}, //some small sigma for the lepton mass
+        {LEP_SIGMA, LEP_SIGMA, K_SIGMA} //some small sigma for the lepton mass
         );
       cand.addUserFloat("sv_chi2", fitter.chi());
       cand.addUserFloat("sv_ndof", fitter.dof()); // float??

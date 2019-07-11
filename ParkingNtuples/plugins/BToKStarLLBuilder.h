@@ -32,18 +32,18 @@ public:
   ~BToKStarLLBuilder() {}
 
   // Nothing is const here as we modify everything
-  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CahcedTrackCollection&, DiLeptonCache &) const;
+  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
 
 private:
   const DiLeptonBuilder<Lepton, Fitter> ll_builder_;
-  const StringCutObjectSelector<reco::Track> k_selection_; // cut on sub-leading lepton
-  const StringCutObjectSelector<reco::Track> pi_selection_; // cut on sub-leading lepton
+  const StringCutObjectSelector<pat::PackedCandidate> k_selection_; // cut on sub-leading lepton
+  const StringCutObjectSelector<pat::PackedCandidate> pi_selection_; // cut on sub-leading lepton
   const StringCutObjectSelector<pat::CompositeCandidate> candidate_pre_vtx_selection_; // cut on the candidate before the SV fit
   const StringCutObjectSelector<pat::CompositeCandidate> candidate_post_vtx_selection_; // cut on the candidate after the SV fit
 };
 
 template<typename Lepton, typename Fitter>
-BToKStarLLBuilder::BToKStarLLBuilder(const edm::ParameterSet& cfg):
+BToKStarLLBuilder<Lepton, Fitter>::BToKStarLLBuilder(const edm::ParameterSet& cfg):
   ll_builder_{cfg},
   k_selection_{cfg.getParameter<std::string>("kSelection")},
   k_selection_{cfg.getParameter<std::string>("piSelection")},
@@ -52,7 +52,7 @@ BToKStarLLBuilder::BToKStarLLBuilder(const edm::ParameterSet& cfg):
 
 template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
-BToKStarLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& tracks, DiLeptonCache &cache) const {
+BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
   auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
@@ -92,7 +92,7 @@ BToKStarLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& track
         Fitter fitter(
           {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, k_track.transient_track, pi_track.transient_track},
           {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS, PI_MASS},
-          {LEP_SIGMA, LEP_SIGMA, K_SIGMA, PI_SIGMA}, //some small sigma for the lepton mass
+          {LEP_SIGMA, LEP_SIGMA, K_SIGMA, PI_SIGMA} //some small sigma for the lepton mass
           );
         cand.addUserFloat("sv_chi2", fitter.chi());
         cand.addUserFloat("sv_ndof", fitter.dof());
@@ -108,12 +108,12 @@ BToKStarLLBuilder::build(LeptonCollection& leptons, CahcedTrackCollection& track
         int pi_idx = (pi_track.idx == -1) ? ntrks++ : pi_track.idx;
         lepton_pair.l1->idx = l1_idx;
         lepton_pair.l2->idx = l2_idx;
-        k_track.idx = trk_idx;
+        k_track.idx = k_idx;
         pi_track.idx = pi_idx;
         cand.addUserInt("l1_idx", l1_idx);
         cand.addUserInt("l2_idx", l2_idx);
-        cand.addUserInt("k_idx", trk_idx);
-        cand.addUserInt("pi_idx", trk_idx);        
+        cand.addUserInt("k_idx", k_idx);
+        cand.addUserInt("pi_idx", pi_idx);        
 
         ret_val->push_back(cand);
       } // loop over pi
