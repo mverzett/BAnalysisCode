@@ -113,7 +113,7 @@ private:
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::EDGetTokenT<std::vector<reco::Vertex>> vtxToken_;
   edm::EDGetTokenT<pat::ElectronCollection> electronsToken_;
-  edm::EDGetTokenT<reco::TrackCollection> tracksToken_;
+  edm::EDGetTokenT<pat::PackedCandidateCollection> tracksToken_;
   edm::EDGetToken muonsToken_;
 //  edm::EDGetToken photonToken_;
   edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
@@ -205,7 +205,7 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   beamSpotToken_{consumes<reco::BeamSpot>(iConfig.getParameter <edm::InputTag>("beamSpot"))},
   vtxToken_{consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))},
   electronsToken_{consumes<std::vector<pat::Electron>>(iConfig.getParameter<edm::InputTag>  ("electrons"))},
-  tracksToken_{consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("tracks"))},
+  tracksToken_{consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("tracks"))},
   muonsToken_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("muons"))),
 // photonToken_(consumes<std::vector<pat::Photon>>(iConfig.getParameter<edm::InputTag>("photons"))),
 // Tracks_(consumes<std::vector<reco::Track> >(iConfig.getParameter<edm::InputTag>("tracks"))),
@@ -359,7 +359,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   iEvent.getByToken(electronsToken_, electrons); 
   edm::Handle<std::vector<pat::Muon>> muons;
   iEvent.getByToken(muonsToken_,muons);
-  edm::Handle<reco::TrackCollection> tracks;
+  edm::Handle<pat::PackedCandidateCollection> tracks;
   iEvent.getByToken(tracksToken_, tracks);
   edm::ESHandle<MagneticField> bFieldHandle;
   iSetup.get<IdealMagneticFieldRecord>().get(bFieldHandle);
@@ -556,7 +556,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.nel++;
   }
   
-  for (const reco::Track &trk : *tracks){      
+  for (const pat::PackedCandidate &trk : *tracks){      
     if (fabs(TrgmuDz - trk.vz()) > ElectronDzCut) continue;
     if (UseDirectlyGenBeeK){
       if (deltaR(EtaPhiK.first,EtaPhiK.second,trk.eta(),trk.phi())>DRgenCone)  continue;
@@ -577,16 +577,13 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.track_phi.push_back(trk.phi());
     nt.track_charge.push_back(trk.charge());
      
-    nt.track_highPurity.push_back(
-      trk.quality(reco::TrackBase::highPurity)
-      );
-     
-    nt.track_norm_chi2.emplace_back(trk.normalizedChi2());
+    nt.track_highPurity.push_back(trk.trackHighPurity());
+    nt.track_norm_chi2.emplace_back(trk.pseudoTrack().normalizedChi2());
     nt.track_dxy.push_back(trk.dxy(vertex_point));
     nt.track_dz.push_back(trk.dz(vertex_point));
-    nt.track_validhits.push_back(trk.numberOfValidHits());
-    nt.track_losthits.push_back(trk.numberOfLostHits());
-    // nt.track_fromPV.push_back(trk.fromPV()); FIXME!
+    nt.track_validhits.push_back(trk.numberOfHits());
+    nt.track_losthits.push_back(trk.lostInnerHits());
+    nt.track_fromPV.push_back(trk.fromPV());
     nt.ntracks++; 
   }
 
@@ -667,7 +664,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if (mu.pt()<min_muon_pt_cut_forB) continue;
       if (fabs(mu.eta())>2.5) continue;
       if (!mu.isSoftMuon(firstGoodVertex)) continue;
-      for(const reco::Track &trk : *tracks){
+      for(const pat::PackedCandidate &trk : *tracks){
         if(mu.charge() == trk.charge()) continue;
         if(trk.charge()==0) continue;
         if (trk.pt()< min_muon_pt_cut_forB) continue;
@@ -681,7 +678,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             (vmu1+vmu2).M()>MLLmax_Cut ) 
             continue;
         muTrack1.emplace_back(reco::TransientTrack(*mu.bestTrack(),   &(*bFieldHandle) ) );
-        muTrack2.emplace_back(reco::TransientTrack(trk, &(*bFieldHandle) ) );
+        muTrack2.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle) ) );
         used_muTrack_pfTrack_index.emplace_back(std::make_pair( &mu-&(muons->at(0)), &trk-&(*tracks)[0]));      
         nmupfpairs++;
       } 
@@ -691,7 +688,8 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   int index=-1;
   if ( (used_muTrack_index.size()>0 || used_eTrack_index.size()>0) && \
        (reconstructBMuMuK || reconstructBMuMuKstar) ){
-    for(const reco::Track &ptrk : *tracks){
+    for(const pat::PackedCandidate &trk : *tracks){
+      reco::Track ptrk = trk.pseudoTrack();
       index++;
       if (ptrk.pt() < track_pt_cut_forB) continue;
       if (fabs(ptrk.eta()) > EtaTrk_Cut) continue;
@@ -713,7 +711,7 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       } 
       if(isMu || isE ) continue;
       KTrack.emplace_back(reco::TransientTrack(ptrk,&(*bFieldHandle)));
-      KTrack_index.push_back(&ptrk-&(*tracks)[0]);  
+      KTrack_index.push_back(&trk-&(*tracks)[0]);  
     }
   }
 

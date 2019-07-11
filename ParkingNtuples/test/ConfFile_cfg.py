@@ -11,7 +11,10 @@ selections = cms.PSet(
     cross_cleaning_dz = cms.double(0.7),
   ),
   tracks = cms.PSet(
-     selection = cms.string('pt > 0.8 && abs(eta) < 2.5'),
+     selection = cms.string(
+        'hasTrackDetails() && abs(pdgId()) == 211 &&'
+        'charge() != 0 && pt > 0.8 && abs(eta) < 2.5'
+     ),
   ),
 )
 

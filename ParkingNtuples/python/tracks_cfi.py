@@ -1,20 +1,18 @@
 import FWCore.ParameterSet.Config as cms
 
-unpackedTracksAndVertices = cms.EDProducer(
-    'PATTrackAndVertexUnpacker',
-    slimmedVertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    slimmedSecondaryVertices = cms.InputTag("slimmedSecondaryVertices"),
-    additionalTracks= cms.InputTag("lostTracks"),
-    packedCandidates = cms.InputTag("packedPFCandidates")
+mergedCandidates = cms.EDProducer(
+    'PackedCandidateMerger',
+    packedSrc = cms.InputTag("packedPFCandidates"),
+    lostSrc = cms.InputTag("lostTracks"),
 )
 
 selectedTracks = cms.EDFilter(
-    "TrackSelector",
-    src = cms.InputTag("unpackedTracksAndVertices"),
+    "PackedCandidateSelector",
+    src = cms.InputTag("mergedCandidates"),
     cut = cms.string('')
 )
 
 tracks = cms.Sequence(
-    unpackedTracksAndVertices *
+    mergedCandidates *
     selectedTracks
 )
