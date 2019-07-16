@@ -30,12 +30,13 @@ private:
   const StringCutObjectSelector<pat::CompositeCandidate> dilepton_post_vtx_selection_; // cut on the di-lepton after the SV fit
 
 public:
-  typedef std::vector<Lepton> LeptonCollection;
+  typedef ChachedObject<Lepton> CachedLepton;
+  typedef std::vector< CachedLepton > CachedLeptonCollection;
   typedef std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > DiLeptonCache;
 
   struct DiLeptonInfo { // all pointer are not owning
-    Lepton *l1 = 0;
-    Lepton *l2 = 0;
+    CachedLepton *l1 = 0;
+    CachedLepton *l2 = 0;
     pat::CompositeCandidate *dilepton = 0;
   };
   typedef std::vector<DiLeptonInfo> DiLeptonInfoCollection;
@@ -49,7 +50,7 @@ public:
   ~DiLeptonBuilder() {};
 
   std::unique_ptr<DiLeptonBuilder<Lepton, Fitter>::DiLeptonInfoCollection> build(
-    const LeptonCollection& leptons,
+    CachedLeptonCollection& leptons,
     DiLeptonCache& cache // It's important that is pass by ref and is not const, we are going to modify it!
     ) const {
 
@@ -84,13 +85,13 @@ public:
         if( !lepton_pair.hasUserFloat("sv_chi2") ) {
           Fitter fitter(
             {*leptons[il1].transient_track, *leptons[il2].transient_track},
-            {l1.mass(), l2.mass()},
+            {l1->mass(), l2->mass()},
             {LEP_SIGMA, LEP_SIGMA} //some small sigma for the particle mass
             );
-          lepton_pair.addUserFloat("sv_chi2", fitter.chi());
+          lepton_pair.addUserFloat("sv_chi2", fitter.chi2());
           lepton_pair.addUserFloat("sv_ndof", fitter.dof()); // float??
           lepton_pair.addUserFloat("sv_prob", ChiSquaredProbability(
-                                     fitter.chi(), fitter.dof()) );
+                                     fitter.chi2(), fitter.dof()) );
           // if needed, add here more stuff
         }
 

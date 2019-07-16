@@ -25,7 +25,7 @@
 template<typename Lepton, typename Fitter>
 class BToKLLBuilder {
 public:
-  typedef std::vector<Lepton> LeptonCollection;
+  typedef std::vector< ChachedObject<Lepton> > LeptonCollection;
   typedef std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > DiLeptonCache;
 
   BToKLLBuilder(const edm::ParameterSet&);
@@ -35,6 +35,7 @@ public:
   std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
 
 private:
+  const bool active_ = false;
   const DiLeptonBuilder<Lepton, Fitter> ll_builder_;
   const StringCutObjectSelector<pat::PackedCandidate> k_selection_; // cut on sub-leading lepton
   const StringCutObjectSelector<pat::CompositeCandidate> candidate_pre_vtx_selection_; // cut on the candidate before the SV fit
@@ -43,6 +44,7 @@ private:
 
 template<typename Lepton, typename Fitter>
 BToKLLBuilder<Lepton, Fitter>::BToKLLBuilder(const edm::ParameterSet& cfg):
+  active_{cfg.getParameter<bool>("active")},
   ll_builder_{cfg},
   k_selection_{cfg.getParameter<std::string>("kSelection")},
   candidate_pre_vtx_selection_{cfg.getParameter<std::string>("candidatePreVtxSelection")},
@@ -52,6 +54,8 @@ template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
 BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
   auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
+  if(!active_) return std::move(ret_val);
+  
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
 
@@ -62,7 +66,7 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
   int ntrks = -1;
   for(const auto& t : tracks) std::max(ntrks, t.idx);
 
-  for(auto &lepton_pair : lepton_pairs) {
+  for(auto &lepton_pair : *lepton_pairs) {
     for(auto &track : tracks) {
       if( !k_selection_(*track.obj) ) continue;
       
@@ -70,6 +74,10 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
       cand.addDaughter( *lepton_pair.l1->obj );
       cand.addDaughter( *lepton_pair.l2->obj );
       cand.addDaughter( *track.obj );
+
+      auto dr_info = min_max_dr(cand);
+      cand.addUserFloat("min_dr", dr_info.first);
+      cand.addUserFloat("max_dr", dr_info.second);
       
       // propagate UserFloats from the dilepton pair
       for(const auto& float_name : lepton_pair.dilepton->userFloatNames()) {
@@ -83,14 +91,14 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
       if( !candidate_pre_vtx_selection_(cand) ) continue;
 
       Fitter fitter(
-        {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, track.transient_track},
+        {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, *track.transient_track},
         {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS},
         {LEP_SIGMA, LEP_SIGMA, K_SIGMA} //some small sigma for the lepton mass
         );
-      cand.addUserFloat("sv_chi2", fitter.chi());
+      cand.addUserFloat("sv_chi2", fitter.chi2());
       cand.addUserFloat("sv_ndof", fitter.dof()); // float??
       cand.addUserFloat("sv_prob", ChiSquaredProbability(
-                          fitter.chi(), fitter.dof()) );
+                          fitter.chi2(), fitter.dof()) );
 
       if( !candidate_post_vtx_selection_(cand) ) continue;
 

@@ -35,6 +35,7 @@ public:
   std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
 
 private:
+  const bool active_ = false;
   const DiLeptonBuilder<Lepton, Fitter> ll_builder_;
   const StringCutObjectSelector<pat::PackedCandidate> k_selection_; // cut on sub-leading lepton
   const StringCutObjectSelector<pat::PackedCandidate> pi_selection_; // cut on sub-leading lepton
@@ -44,6 +45,7 @@ private:
 
 template<typename Lepton, typename Fitter>
 BToKStarLLBuilder<Lepton, Fitter>::BToKStarLLBuilder(const edm::ParameterSet& cfg):
+  active_{cfg.getParameter<bool>("active")},
   ll_builder_{cfg},
   k_selection_{cfg.getParameter<std::string>("kSelection")},
   k_selection_{cfg.getParameter<std::string>("piSelection")},
@@ -54,6 +56,8 @@ template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
 BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
   auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
+  if(!active_) return std::move(ret_val);
+  
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
 
@@ -64,7 +68,7 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
   int ntrks = -1;
   for(const auto& t : tracks) std::max(ntrks, t.idx);
 
-  for(auto &lepton_pair : lepton_pairs) {
+  for(auto &lepton_pair : *lepton_pairs) {
     for(auto &k_track : tracks) {
       if( !k_selection_(*k_track.obj) ) continue;
 
@@ -90,14 +94,14 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
         if( !candidate_pre_vtx_selection_(cand) ) continue;
 
         Fitter fitter(
-          {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, k_track.transient_track, pi_track.transient_track},
+          {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, *k_track.transient_track, *pi_track.transient_track},
           {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS, PI_MASS},
           {LEP_SIGMA, LEP_SIGMA, K_SIGMA, PI_SIGMA} //some small sigma for the lepton mass
           );
-        cand.addUserFloat("sv_chi2", fitter.chi());
+        cand.addUserFloat("sv_chi2", fitter.chi2());
         cand.addUserFloat("sv_ndof", fitter.dof());
         cand.addUserFloat("sv_prob", ChiSquaredProbability(
-                          fitter.chi(), fitter.dof()) );
+                          fitter.chi2(), fitter.dof()) );
 
         if( !candidate_post_vtx_selection_(cand) ) continue;
 

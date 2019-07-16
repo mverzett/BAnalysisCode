@@ -66,6 +66,10 @@ void ElectronMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
     out->push_back(ele);
   }
 
+  std::sort(
+    out->begin(), out->end(), 
+    [] (pat::Electron e1, pat::Electron e2) -> bool {return e1.pt() < e2.pt();}
+    );
   evt.put(std::move(out));
 }
 

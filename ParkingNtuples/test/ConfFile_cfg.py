@@ -16,6 +16,46 @@ selections = cms.PSet(
         'charge() != 0 && pt > 0.8 && abs(eta) < 2.5'
      ),
   ),
+  BToKMuMu = cms.PSet(
+     active = cms.bool(True),
+    l1Selection = cms.string(''),
+    l2Selection = cms.string(''),
+    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass < 5 && charge == 0'),
+    diLeptonPostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+    kSelection = cms.string(''),
+    candidatePreVtxSelection  = cms.string('userFloat("min_dr") > 0.03 && mass < 8'),
+    candidatePostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+  ),
+  BToKEE = cms.PSet(
+    active = cms.bool(False),
+    l1Selection = cms.string('pt > 1.5 && (electronID("unbiased_seed") >= 3 || userInt("isPF") == 1)'),
+    l2Selection = cms.string('pt > 0.5 && (electronID("unbiased_seed") >= -4 || userInt("isPF") == 1)'),
+    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass < 5 && charge == 0'),
+    diLeptonPostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+    kSelection = cms.string(''),
+    candidatePreVtxSelection  = cms.string('userFloat("min_dr") > 0.03 && mass < 8'),
+    candidatePostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+  ),
+  BToKStarMuMu = cms.PSet(
+    active = cms.bool(False),
+    l1Selection = cms.string(''),
+    l2Selection = cms.string(''),
+    diLeptonPreVtxSelection  = cms.string(''),
+    diLeptonPostVtxSelection = cms.string(''),
+    kSelection = cms.string(''),
+    candidatePreVtxSelection  = cms.string(''),
+    candidatePostVtxSelection = cms.string(''),
+  ),
+  BToKStarEE = cms.PSet(
+    active = cms.bool(False),
+    l1Selection = cms.string(''),
+    l2Selection = cms.string(''),
+    diLeptonPreVtxSelection  = cms.string(''),
+    diLeptonPostVtxSelection = cms.string(''),
+    kSelection = cms.string(''),
+    candidatePreVtxSelection  = cms.string(''),
+    candidatePostVtxSelection = cms.string(''),
+  ),
 )
 
 IsData=True
@@ -165,7 +205,7 @@ process.load('BAnalysisCode/ParkingNtuples/tracks_cfi')
 process.selectedTracks.cut = selections.tracks.selection
 process.ntuplesSeq *= process.tracks
 
-process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
+process.demo = cms.EDFilter('ParkingNtupleMaker',
                               beamSpot       = cms.InputTag('offlineBeamSpot'),
                               electrons      = cms.InputTag('electronsForAnalysis'),
                               vertices       = cms.InputTag("offlineSlimmedPrimaryVertices"),
@@ -199,6 +239,8 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
                               packed        = cms.InputTag("packedGenParticles"),
                               pruned        = cms.InputTag("prunedGenParticles"),
                               tracks        = cms.InputTag("selectedTracks"),
+                            BToKMuMu = selections.BToKMuMu,
+                            BToKEE = selections.BToKEE,
                                RunParameters = cms.PSet(
       Data= cms.bool(IsData),
       SaveTracks=cms.bool(saveTrk),
@@ -254,6 +296,17 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
 )
 process.ntuplesSeq *= process.demo
 
+#
+# Make NanoAOD Tables from the filter outputs
+#
+process.load('BAnalysisCode/ParkingNtuples/tables_cff')
+process.muonTable.src = 'demo:muons'
+process.electronTable.src = 'demo:electrons'
+process.trackTable.src = 'demo:tracks'
+process.bToKMuMuTable.src = 'demo:BToKMuMu'
+process.bToKEETable.src = 'demo:BToKEE'
+process.ntuplesSeq *= process.tables
+
 process.load( "HLTrigger.HLTanalyzers.hlTrigReport_cfi" )
 process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True),
@@ -265,11 +318,6 @@ process.hlTrigReport.HLTriggerResults   = cms.InputTag("TriggerResults", "", "HL
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string(output)
                                    )
-process.fevt = cms.OutputModule("PoolOutputModule",
-   # SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("path")),
-    outputCommands = cms.untracked.vstring(#"drop *",
-    ),
-    fileName = cms.untracked.string("edm_output.root"))
 
 #process.p = cms.Path(process.egmGsfElectronIDSequence)#* process.demo)
 process.p = cms.Path(
@@ -278,6 +326,35 @@ process.p = cms.Path(
    #+process.hlTrigReport
   
    )
-   
+
+#
+# NanoAOD output module
+#
+from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import NANOAODEventContent
+process.NANOAODoutput = cms.OutputModule(
+   "NanoAODOutputModule",
+   compressionAlgorithm = cms.untracked.string('LZMA'),
+   compressionLevel = cms.untracked.int32(9),
+   SelectEvents = cms.untracked.PSet(
+      SelectEvents = cms.vstring('p') # Select only events passing path p
+      ),
+   dataset = cms.untracked.PSet(
+      dataTier = cms.untracked.string('NANOAOD'),
+        filterName = cms.untracked.string('')
+   ),
+   fileName = cms.untracked.string('test_data_10213_NANO.root'),
+   outputCommands = cms.untracked.vstring(
+      'drop *',
+      "keep nanoaodFlatTable_*Table_*_*",     # event data
+      "keep nanoaodUniqueString_nanoMetadata_*_*",   # basic metadata
+   ),
+)
+
+
+process.endjob = cms.EndPath(
+   process.NANOAODoutput
+)
+
+process.schedule = cms.Schedule(process.p, process.endjob)   
 #process.endjob=cms.EndPath(process.fevt)
 

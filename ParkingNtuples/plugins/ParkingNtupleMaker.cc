@@ -26,7 +26,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDFilter.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -81,6 +81,7 @@
 #include "DiLeptonBuilder.h"
 #include "BToKLLBuilder.h"
 #include "BToKStarLLBuilder.h"
+#include "KinVtxFitter.h"
 
 using namespace std;
 
@@ -94,7 +95,7 @@ using namespace std;
 // from  edm::one::EDAnalyzer<> and also remove the line from
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
-class ParkingNtupleMaker : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::one::WatchRuns>  {
+class ParkingNtupleMaker : public edm::one::EDFilter<edm::one::SharedResources,edm::one::WatchRuns>  {
 
 public:
   explicit ParkingNtupleMaker(const edm::ParameterSet&);
@@ -106,10 +107,25 @@ public:
 private:
   virtual void beginJob() override;
   void         beginRun(edm::Run const& iEvent, edm::EventSetup const&) ;
-  virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+  virtual bool filter(edm::Event&, edm::EventSetup const&) override;
   void         endRun(edm::Run const& iEvent, edm::EventSetup const&){};
   virtual void endJob() override;
 //   virtual void beginRun(const edm::Run &, const edm::EventSetup &);
+  inline void fill_empty(edm::Event& evt) {
+    // utility function to fill all empty collections
+    auto electrons_out = make_unique<pat::ElectronCollection>();
+    auto muons_out = make_unique<pat::MuonCollection>();
+    auto cands_out = make_unique<pat::PackedCandidateCollection>();
+    auto b_kmumu = make_unique<pat::CompositeCandidateCollection>();
+    auto b_kee = make_unique<pat::CompositeCandidateCollection>();
+
+    evt.put(std::move(electrons_out), "electrons");
+    evt.put(std::move(muons_out), "muons");
+    evt.put(std::move(cands_out), "tracks");
+    evt.put(std::move(b_kmumu), "BToKMuMu");
+    evt.put(std::move(b_kee), "BToKEE");
+  
+  }
 
   std::vector<std::vector<float>> track_DCA(std::vector<reco::TransientTrack> ttks);
   std::vector<GlobalVector>refit_tracks(TransientVertex myVertex,std::vector<reco::TransientTrack> tracks);
@@ -120,22 +136,21 @@ private:
   const edm::EDGetTokenT<pat::PackedCandidateCollection> tracksToken_;
   edm::EDGetToken muonsToken_;
 //  edm::EDGetToken photonToken_;
-  const edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
+  edm::EDGetTokenT<GlobalAlgBlkBxCollection> l1resultToken_;
   edm::EDGetToken l1MuonsToken_;
   vector<string> Seed_;
-  const edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
-  const edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
+  edm::EDGetTokenT<edm::TriggerResults> trgresultsToken_; 
+  edm::EDGetTokenT<vector<pat::TriggerObjectStandAlone>> trigobjectsToken_;
   vector<string> HLTPath_;
   HLTPrescaleProvider hltPrescaleProvider_;
-  const edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
-  const edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
+  edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
+  edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
 
   // Candidate builders
-  const BToKLLBuilder<CachedMuon, KinFitter> bmumu_builder_;
-  const BToKLLBuilder<CachedElectron, KinFitter> bmumu_builder_;
-  const BToKStarLLBuilder<CachedMuon, KinFitter> bmumu_builder_;
-  const BToKStarLLBuilder<CachedElectron, KinFitter> bmumu_builder_;
-
+  const BToKLLBuilder<pat::Muon, KinVtxFitter> b_to_kmumu_builder_;
+  const BToKLLBuilder<pat::Electron, KinVtxFitter> b_to_kee_builder_;
+  // const BToKStarLLBuilder<CachedMuon, KinVtxFitter> b_to_kstarmumu_builder_;
+  // const BToKStarLLBuilder<CachedElectron, KinVtxFitter> b_to_kstaree_builder_;
 
   edm::Service<TFileService> fs;
   TTree * t1; 
@@ -228,8 +243,9 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   HLTPath_(iConfig.getParameter<vector<string> >("HLTPath")),
   hltPrescaleProvider_ (iConfig, consumesCollector(), *this),
   prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
-  packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed")))
-{
+  packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed"))),
+  b_to_kmumu_builder_{iConfig.getParameter<edm::ParameterSet>("BToKMuMu")},
+  b_to_kee_builder_{iConfig.getParameter<edm::ParameterSet>("BToKEE")} {
 
   edm::ParameterSet runParameters=iConfig.getParameter<edm::ParameterSet>("RunParameters");
   data=runParameters.getParameter<bool>("Data");
@@ -276,6 +292,14 @@ ParkingNtupleMaker::ParkingNtupleMaker(const edm::ParameterSet& iConfig):
   RetrieveMuFromTrk=runParameters.getParameter<bool>("RetrieveMuFromTrk");
   DzeeMaxCut=runParameters.getParameter<double>("DzeeMaxCut");
   PtBminCut=runParameters.getParameter<double>("PtBminCut");
+
+
+  produces<pat::ElectronCollection>("electrons");
+  produces<pat::MuonCollection>("muons");
+  produces<pat::PackedCandidateCollection>("tracks");
+  produces<pat::CompositeCandidateCollection>("BToKMuMu");
+  produces<pat::CompositeCandidateCollection>("BToKEE");
+  
   
 //   fGtUtil = new l1t::L1TGlobalUtil(iConfig, 
 //                                 consumesCollector(), 
@@ -353,9 +377,12 @@ ParkingNtupleMaker::refit_tracks(TransientVertex myVertex,std::vector<reco::Tran
   return gvmu;
 }
 
-void
-ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+bool
+ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
 {
+  auto electrons_out = make_unique<pat::ElectronCollection>();
+  auto muons_out = make_unique<pat::MuonCollection>();
+  auto cands_out = make_unique<pat::PackedCandidateCollection>();
 
   using namespace std;
   //Get a few collections to apply basic electron ID
@@ -365,7 +392,10 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
   //continue if there are no vertices
-  if (vertices->size()==0) return;
+  if (vertices->size()==0) {    
+    fill_empty(iEvent);
+    return false;
+  }
   edm::Handle<std::vector<pat::Electron>> electrons;
   iEvent.getByToken(electronsToken_, electrons); 
   edm::Handle<std::vector<pat::Muon>> muons;
@@ -464,7 +494,10 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
        EtaPhiE2=gen.EtaPhiaL();
      }
    }
-   if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) return;
+   if (UseDirectlyGenBeeK && (EtaPhiK.second==-10 || EtaPhiE1.second==-10 || EtaPhiE2.second==-10) ) {    
+     fill_empty(iEvent);
+     return false;
+   }
   
   
   //save trigger related information
@@ -481,7 +514,10 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     if (saveHLT){
       trigger.HLTtrigger(HLTPath_, hltPrescaleProvider_); 
       trigger.HLTobjects(HLTPath_);
-      if (saveOnlyHLTFires && !trigger.HLTPathFire()) return;
+      if (saveOnlyHLTFires && !trigger.HLTPathFire()) {
+        fill_empty(iEvent);
+        return false;
+      }
       trigger.FillHLT(nt); 
       trigger.FillObj(nt);
       if (trigger.HLTPathFire())
@@ -547,8 +583,20 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.muon_iso.push_back(mu_iso);
     muttks.emplace_back(reco::TransientTrack(*mu.bestTrack(),&(*bFieldHandle)));
     nt.nmuons++;
+    
+    // Store info in stores
+    muon_store.push_back(mu);
+    ttrack_store.emplace_back(reco::TransientTrack(*mu.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
+    cached_muons.emplace_back(
+      &muon_store.back(),
+      &ttrack_store.back(),
+      nt.nmuons -1 // FIXME! This is just to keep all muons to compare with George's ntuples
+      );
   }
-  if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) return;
+  if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) {
+    fill_empty(iEvent);
+    return false;
+  }
     
   //electrons  
   trigger::size_type eindex=-1; 
@@ -583,6 +631,15 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.el_trkphi.push_back(el.bestTrack()->phi()); 
     ettks.emplace_back(reco::TransientTrack(*el.bestTrack(),&(*bFieldHandle)));
     nt.nel++;
+
+    // Store info in stores
+    electron_store.push_back(el);
+    ttrack_store.emplace_back(reco::TransientTrack(*el.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
+    cached_electrons.emplace_back(
+      &electron_store.back(),
+      &ttrack_store.back(),
+      nt.nel -1 // FIXME! This is just to keep all muons to compare with George's ntuples
+      );
   }
   
   for (const pat::PackedCandidate &trk : *tracks){      
@@ -614,12 +671,74 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     nt.track_losthits.push_back(trk.lostInnerHits());
     nt.track_fromPV.push_back(trk.fromPV());
     nt.ntracks++; 
+
+    // Store info in stores
+    candidate_store.push_back(trk);
+    ttrack_store.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
+    cached_candidates.emplace_back(
+      &candidate_store.back(),
+      &ttrack_store.back(),
+      nt.ntracks -1 // FIXME! This is just to keep all muons to compare with George's ntuples
+      );
   }
 
   if(!reconstructBMuMuK && !reconstructBMuMuKstar){ 
     t1->Fill(); 
-    return; 
+    fill_empty(iEvent);
+    return false;
   }  
+
+  // Create candidate collections
+  auto b_kmumu = b_to_kmumu_builder_.build(cached_muons, cached_candidates, dimu_cache);
+  auto b_kee   = b_to_kee_builder_.build(cached_electrons, cached_candidates, diel_cache);
+
+  // Copy only candidates that have an index, meaning they formed a candidate somewhere
+  CachedMuonCollection      used_muons;
+  CachedElectronCollection  used_electrons;
+  CachedCandidateCollection used_candidates;
+  
+  std::copy_if(
+    cached_muons.begin(), cached_muons.end(), std::back_inserter(used_muons),
+    [] (const CachedMuon &m) -> bool {return m.idx >= 0;}
+    );
+  std::copy_if(
+    cached_electrons.begin(), cached_electrons.end(), std::back_inserter(used_electrons),
+    [] (const CachedElectron &m) -> bool {return m.idx >= 0;}
+    );
+  std::copy_if(
+    cached_candidates.begin(), cached_candidates.end(), std::back_inserter(used_candidates),
+    [] (const CachedCandidate &m) -> bool {return m.idx >= 0;}
+    );
+
+  // Now, sort the cached collection according to the indices
+  std::sort(
+    cached_muons.begin(), cached_muons.end(), 
+    [] (const CachedMuon &m1, const CachedMuon &m2) -> bool {return m1.idx < m2.idx;}
+    );
+  std::sort(
+    cached_electrons.begin(), cached_electrons.end(), 
+    [] (const CachedElectron &m1, const CachedElectron &m2) -> bool {return m1.idx < m2.idx;}
+    );
+  std::sort(
+    cached_candidates.begin(), cached_candidates.end(), 
+    [] (const CachedCandidate &m1, const CachedCandidate &m2) -> bool {return m1.idx < m2.idx;}
+    );
+
+  // Finally, fill the output collections from the pointer contents
+  std::transform(
+    cached_muons.begin(), cached_muons.end(), muons_out->begin(),
+    [] (const CachedMuon &m) -> pat::Muon { return *m.obj; }
+    );
+
+  std::transform(
+    cached_electrons.begin(), cached_electrons.end(), electrons_out->begin(),
+    [] (const CachedElectron &m) -> pat::Electron { return *m.obj; }
+    );
+
+  std::transform(
+    cached_candidates.begin(), cached_candidates.end(), cands_out->begin(),
+    [] (const CachedCandidate &m) -> pat::PackedCandidate { return *m.obj; }
+    );
 
   //muon pairs 
   if(!OnlyKee){
@@ -681,9 +800,18 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   }
 
   if (used_muTrack_index.size()==0 && used_eTrack_index.size()==0){
-    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) return;
-    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) return;
-    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
+    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) {
+      fill_empty(iEvent);
+      return false;
+    }
+    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) {
+      fill_empty(iEvent);
+      return false;
+    }
+    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) {
+      fill_empty(iEvent);
+      return false;
+    }
   }
  
   if (RetrieveMuFromTrk){
@@ -803,13 +931,30 @@ ParkingNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   //skip useless events
   if (nt.NRb_mass.size()==0 && nt.NRbks_mass.size()==0){
-    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) return;
-    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) return;
-    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) return;
+    if      (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && !reconstructBMuMuKstar) {
+      fill_empty(iEvent);
+      return false;
+    }
+    else if (reconstructBMuMuKstar && SkipEventWithNoBToMuMuKstar && !reconstructBMuMuK    ) {
+      fill_empty(iEvent);
+      return false;
+    }
+    else if (reconstructBMuMuK     && SkipEventWithNoBToMuMuK     && SkipEventWithNoBToMuMuKstar && reconstructBMuMuKstar) {
+      fill_empty(iEvent);
+      return false;
+    }
   }  
   
   if (NtupleOutputClasses=="flat") nt.Flatting();
   t1->Fill();
+
+  iEvent.put(std::move(electrons_out), "electrons");
+  iEvent.put(std::move(muons_out), "muons");
+  iEvent.put(std::move(cands_out), "tracks");
+  iEvent.put(std::move(b_kmumu), "BToKMuMu");
+  iEvent.put(std::move(b_kee), "BToKEE");
+
+  return true;
 }
 
 
