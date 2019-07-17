@@ -5,6 +5,7 @@
 #include "RecoVertex/KinematicFitPrimitives/interface/RefCountedKinematicVertex.h"
 #include "RecoVertex/KinematicFitPrimitives/interface/KinematicState.h"
 #include "RecoVertex/KinematicFitPrimitives/interface/RefCountedKinematicParticle.h"
+#include "CommonTools/Statistics/interface/ChiSquaredProbability.h"
 #include <vector>
 
 class KinVtxFitter {
@@ -23,8 +24,11 @@ public:
   ~KinVtxFitter() {};
 
   bool success() const {return success_;}
-  float chi2() const {return fitted_vtx_->chiSquared();}
-  float dof() const  {return fitted_vtx_->degreesOfFreedom();}
+  float chi2() const {return success_ ? fitted_vtx_->chiSquared() : 999;}
+  float dof() const  {return success_ ? fitted_vtx_->degreesOfFreedom() : -1;}
+  float prob() const {
+    return success_ ? ChiSquaredProbability(chi2(), dof()) : 0.;
+  }
   float kin_chi2() const {return kin_chi2_;} // should they be merged in a single value?
   float kin_ndof() const {return kin_ndof_;}
   

@@ -3,6 +3,7 @@
 
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "CommonTools/Statistics/interface/ChiSquaredProbability.h"
 #include <vector>
 
 class KalmanVtxFitter {
@@ -18,8 +19,11 @@ public:
   ~KalmanVtxFitter() {};
 
   bool success() const {return success_;}
-  float chi2() const {return fitted_vtx_.totalChiSquared();}
-  float dof() const  {return fitted_vtx_.degreesOfFreedom();}
+  float chi2() const {return success_ ? fitted_vtx_.totalChiSquared()  : 999;}
+  float dof() const  {return success_ ? fitted_vtx_.degreesOfFreedom() : -1;}
+  float prob() const {
+    return success_ ? ChiSquaredProbability(chi2(), dof()) : 0.;
+  }
   
   GlobalPoint fitted_vtx() const {
     return fitted_vtx_.position();

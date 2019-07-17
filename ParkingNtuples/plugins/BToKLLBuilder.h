@@ -18,7 +18,6 @@
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Math/interface/deltaR.h"
-#include "CommonTools/Statistics/interface/ChiSquaredProbability.h"
 #include "helpers.h"
 #include <algorithm>
 
@@ -91,14 +90,13 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
       if( !candidate_pre_vtx_selection_(cand) ) continue;
 
       Fitter fitter(
-        {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, *track.transient_track},
+        {*lepton_pair.l1->transient_track, *lepton_pair.l2->transient_track, *track.transient_track},
         {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS},
         {LEP_SIGMA, LEP_SIGMA, K_SIGMA} //some small sigma for the lepton mass
         );
       cand.addUserFloat("sv_chi2", fitter.chi2());
       cand.addUserFloat("sv_ndof", fitter.dof()); // float??
-      cand.addUserFloat("sv_prob", ChiSquaredProbability(
-                          fitter.chi2(), fitter.dof()) );
+      cand.addUserFloat("sv_prob", fitter.prob());
 
       if( !candidate_post_vtx_selection_(cand) ) continue;
 

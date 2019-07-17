@@ -94,7 +94,7 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
         if( !candidate_pre_vtx_selection_(cand) ) continue;
 
         Fitter fitter(
-          {*lepton_pair.l1->transient_track, *lepton_pair.l1->transient_track, *k_track.transient_track, *pi_track.transient_track},
+          {*lepton_pair.l1->transient_track, *lepton_pair.l2->transient_track, *k_track.transient_track, *pi_track.transient_track},
           {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS, PI_MASS},
           {LEP_SIGMA, LEP_SIGMA, K_SIGMA, PI_SIGMA} //some small sigma for the lepton mass
           );

@@ -16,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <memory>
 
 template<typename T>
 struct ChachedObject {
@@ -39,6 +40,32 @@ typedef ChachedObject<pat::PackedCandidate> CachedCandidate;
 typedef std::vector<CachedMuon> CachedMuonCollection;
 typedef std::vector<CachedElectron> CachedElectronCollection;
 typedef std::vector<CachedCandidate> CachedCandidateCollection;
+
+template<typename T>
+std::vector< ChachedObject<T> > vec_to_cached(
+  std::vector<T>& objs, 
+  std::vector<reco::TransientTrack>& ttks,
+  bool keep_idxs = false) {
+  std::vector< ChachedObject<T> > ret_val;
+  for(size_t i = 0; i < objs.size(); ++i) {
+    ret_val.emplace_back(&objs[i], &ttks[i], keep_idxs ? i : -1);
+  }
+  return ret_val;
+}
+
+template<typename T>
+std::unique_ptr< vector<T> > cached_to_vec(std::vector< ChachedObject<T> > in) {
+  auto out = std::make_unique< vector<T> >();
+  out->reserve(in.size());
+
+  for(const auto& o : in) {
+    out->emplace_back(*o.obj);
+  }
+
+  return std::move(out);
+}
+
+
 
 constexpr double K_MASS = 0.493677;
 constexpr double PI_MASS = 0.139571;

@@ -90,8 +90,7 @@ public:
             );
           lepton_pair.addUserFloat("sv_chi2", fitter.chi2());
           lepton_pair.addUserFloat("sv_ndof", fitter.dof()); // float??
-          lepton_pair.addUserFloat("sv_prob", ChiSquaredProbability(
-                                     fitter.chi2(), fitter.dof()) );
+          lepton_pair.addUserFloat("sv_prob", fitter.prob());
           // if needed, add here more stuff
         }
 

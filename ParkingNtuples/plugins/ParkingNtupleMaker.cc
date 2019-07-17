@@ -380,10 +380,6 @@ ParkingNtupleMaker::refit_tracks(TransientVertex myVertex,std::vector<reco::Tran
 bool
 ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
 {
-  auto electrons_out = make_unique<pat::ElectronCollection>();
-  auto muons_out = make_unique<pat::MuonCollection>();
-  auto cands_out = make_unique<pat::PackedCandidateCollection>();
-
   using namespace std;
   //Get a few collections to apply basic electron ID
   //Get data
@@ -532,20 +528,12 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
   std::vector<pat::Muon> muon_store;
   std::vector<pat::Electron> electron_store;
   std::vector<pat::PackedCandidate> candidate_store;
-  std::vector<reco::TransientTrack> ttrack_store;
+  std::vector<reco::TransientTrack> muon_ttracks;
+  std::vector<reco::TransientTrack> electron_ttracks;
+  std::vector<reco::TransientTrack> candidate_ttracks;
   
-  // Support collections for the objects, they contain pointers
-  // to the vectors above, in an orderly fashion
-  CachedMuonCollection cached_muons;
-  CachedElectronCollection cached_electrons;
-  CachedCandidateCollection cached_candidates;
-  
-  // Di-lepton caches (to be used later when building the B candidates)
-  // the key is the index of the two leptons
-  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > dimu_cache;
-  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > diel_cache;
-
   //  save offline muons (all or saveOnlyHLTFires)
+  //std::cout << "Muons" << std::endl;
   for (const pat::Muon &mu : *muons){    
     // for (unsigned int i=0, n=mu.numberOfSourceCandidatePtrs(); i<n; ++i){
      //   footprint.push_back(mu.sourceCandidatePtr(i));
@@ -585,13 +573,8 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
     nt.nmuons++;
     
     // Store info in stores
-    muon_store.push_back(mu);
-    ttrack_store.emplace_back(reco::TransientTrack(*mu.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
-    cached_muons.emplace_back(
-      &muon_store.back(),
-      &ttrack_store.back(),
-      nt.nmuons -1 // FIXME! This is just to keep all muons to compare with George's ntuples
-      );
+    muon_store.push_back(mu);    
+    muon_ttracks.emplace_back(reco::TransientTrack(*mu.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
   }
   if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) {
     fill_empty(iEvent);
@@ -599,6 +582,7 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
   }
     
   //electrons  
+  //std::cout << "Electrons" << std::endl;
   trigger::size_type eindex=-1; 
   for(const pat::Electron &el : *electrons){
     eindex++;
@@ -634,14 +618,10 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
 
     // Store info in stores
     electron_store.push_back(el);
-    ttrack_store.emplace_back(reco::TransientTrack(*el.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
-    cached_electrons.emplace_back(
-      &electron_store.back(),
-      &ttrack_store.back(),
-      nt.nel -1 // FIXME! This is just to keep all muons to compare with George's ntuples
-      );
+    electron_ttracks.emplace_back(reco::TransientTrack(*el.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
   }
   
+  //std::cout << "Tracks:" << std::endl;
   for (const pat::PackedCandidate &trk : *tracks){      
     if (fabs(TrgmuDz - trk.vz()) > ElectronDzCut) continue;
     if (UseDirectlyGenBeeK){
@@ -674,12 +654,7 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
 
     // Store info in stores
     candidate_store.push_back(trk);
-    ttrack_store.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
-    cached_candidates.emplace_back(
-      &candidate_store.back(),
-      &ttrack_store.back(),
-      nt.ntracks -1 // FIXME! This is just to keep all muons to compare with George's ntuples
-      );
+    candidate_ttracks.emplace_back(reco::TransientTrack(trk.pseudoTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
   }
 
   if(!reconstructBMuMuK && !reconstructBMuMuKstar){ 
@@ -688,8 +663,24 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
     return false;
   }  
 
+  // Support collections for the objects, they contain pointers
+  // to the vectors above, in an orderly fashion
+  // cached vectors need to be built here AFTER the original vectors
+  // are done, otherwise the vector self-growing feature will
+  // mess up the pointer location and lead to segfaults
+  CachedMuonCollection cached_muons = vec_to_cached(muon_store, muon_ttracks, true);
+  CachedElectronCollection cached_electrons = vec_to_cached(electron_store, electron_ttracks, true);
+  CachedCandidateCollection cached_candidates = vec_to_cached(candidate_store, candidate_ttracks, true);
+  
+  // Di-lepton caches (to be used later when building the B candidates)
+  // the key is the index of the two leptons
+  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > dimu_cache;
+  std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > diel_cache;
+
   // Create candidate collections
+  //std::cout << "B->Kuu" << std::endl;
   auto b_kmumu = b_to_kmumu_builder_.build(cached_muons, cached_candidates, dimu_cache);
+  //std::cout << "B->Kee" << std::endl;
   auto b_kee   = b_to_kee_builder_.build(cached_electrons, cached_candidates, diel_cache);
 
   // Copy only candidates that have an index, meaning they formed a candidate somewhere
@@ -710,35 +701,24 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
     [] (const CachedCandidate &m) -> bool {return m.idx >= 0;}
     );
 
-  // Now, sort the cached collection according to the indices
+  // Now, sort the used collection according to the indices
   std::sort(
-    cached_muons.begin(), cached_muons.end(), 
+    used_muons.begin(), used_muons.end(), 
     [] (const CachedMuon &m1, const CachedMuon &m2) -> bool {return m1.idx < m2.idx;}
     );
   std::sort(
-    cached_electrons.begin(), cached_electrons.end(), 
+    used_electrons.begin(), used_electrons.end(), 
     [] (const CachedElectron &m1, const CachedElectron &m2) -> bool {return m1.idx < m2.idx;}
     );
   std::sort(
-    cached_candidates.begin(), cached_candidates.end(), 
+    used_candidates.begin(), used_candidates.end(), 
     [] (const CachedCandidate &m1, const CachedCandidate &m2) -> bool {return m1.idx < m2.idx;}
     );
 
-  // Finally, fill the output collections from the pointer contents
-  std::transform(
-    cached_muons.begin(), cached_muons.end(), muons_out->begin(),
-    [] (const CachedMuon &m) -> pat::Muon { return *m.obj; }
-    );
-
-  std::transform(
-    cached_electrons.begin(), cached_electrons.end(), electrons_out->begin(),
-    [] (const CachedElectron &m) -> pat::Electron { return *m.obj; }
-    );
-
-  std::transform(
-    cached_candidates.begin(), cached_candidates.end(), cands_out->begin(),
-    [] (const CachedCandidate &m) -> pat::PackedCandidate { return *m.obj; }
-    );
+  // Finally, create the output collections from the pointer contents
+  auto electrons_out = cached_to_vec(used_electrons);
+  auto muons_out     = cached_to_vec(used_muons);
+  auto cands_out     = cached_to_vec(used_candidates);
 
   //muon pairs 
   if(!OnlyKee){

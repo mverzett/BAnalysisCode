@@ -28,7 +28,7 @@
  <use name="TrackingTools/Records"/>
  <use name="TrackingTools/TransientTrack"/>
  <use name="HLTrigger/HLTcore"/>
-
+ <flags CXXFLAGS=" -g"/> 
  <flags EDM_PLUGIN="1"/>
  <flags ADD_SUBDIR="1"/>
 </library>
