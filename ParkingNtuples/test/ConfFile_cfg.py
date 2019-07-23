@@ -17,24 +17,28 @@ selections = cms.PSet(
      ),
   ),
   BToKMuMu = cms.PSet(
-     active = cms.bool(True),
-    l1Selection = cms.string(''),
-    l2Selection = cms.string(''),
-    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass < 5 && charge == 0'),
-    diLeptonPostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
-    kSelection = cms.string(''),
-    candidatePreVtxSelection  = cms.string('userFloat("min_dr") > 0.03 && mass < 8'),
-    candidatePostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+    active = cms.bool(True),
+    l1Selection = cms.string('userInt("soft_id") == 1'),
+    l2Selection = cms.string('userInt("soft_id") == 1'),
+    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass < 5 && mass > 0 && charge == 0'),
+    diLeptonPostVtxSelection = cms.string('userFloat("sv_chi2") < 998 && userFloat("sv_prob") > 0'),
+    kSelection = cms.string('1'),
+    candidatePreVtxSelection  = cms.string(
+       'pt > 3. && userFloat("min_dr") > 0.03 && mass < 8 && mass > 4.5'),
+    candidatePostVtxSelection = cms.string('userFloat("sv_chi2") < 998 && userFloat("sv_prob") > 0.00000001 && userFloat("cos_theta_2D") >= 0'),
   ),
   BToKEE = cms.PSet(
-    active = cms.bool(False),
-    l1Selection = cms.string('pt > 1.5 && (electronID("unbiased_seed") >= 3 || userInt("isPF") == 1)'),
-    l2Selection = cms.string('pt > 0.5 && (electronID("unbiased_seed") >= -4 || userInt("isPF") == 1)'),
-    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass < 5 && charge == 0'),
-    diLeptonPostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+    active = cms.bool(True),
+    l1Selection = cms.string('pt > 1.5 && (userInt("isPF") == 1 || electronID("unbiased_seed") >= 3 )'),
+    l2Selection = cms.string('pt > 0.5 && (userInt("isPF") == 1 || electronID("unbiased_seed") >= -4)'),
+    diLeptonPreVtxSelection  = cms.string('abs(daughter(0).vz - daughter(1).vz) <= 1. && mass() < 5 && mass() > 0 && charge() == 0'),
+    diLeptonPostVtxSelection = cms.string('userFloat("sv_chi2") < 998 && userFloat("sv_prob") > 0'),
     kSelection = cms.string(''),
-    candidatePreVtxSelection  = cms.string('userFloat("min_dr") > 0.03 && mass < 8'),
-    candidatePostVtxSelection = cms.string('userFloat("sv_prob") > 0'),
+    candidatePreVtxSelection  = cms.string(
+       'pt > 3. && userFloat("min_dr") > 0.01 '
+       '&& mass < 6 && mass > 4.5'
+    ),
+    candidatePostVtxSelection = cms.string('userInt("sv_OK") == 1 && userFloat("sv_prob") > 0.00000001 && userFloat("cos_theta_2D") >= 0'),
   ),
   BToKStarMuMu = cms.PSet(
     active = cms.bool(False),
@@ -250,7 +254,7 @@ process.demo = cms.EDFilter('ParkingNtupleMaker',
       ReconstructBMuMuK=cms.bool(RecoBtoKLepLep),
       ReconstructBMuMuKstar=cms.bool(RecoBtoKstarLepLep),
       MuonMinPtCut = cms.double(1.),
-      MuonMaxPtCut = cms.double(1.),
+      MuonMaxPtCut = cms.double(999.),
       MuonPtCutForB=cms.double(MuPtCut),
       RetrieveMuFromTrk=cms.bool(RetrieveMuFromTrk["algo"]),
       maxPtTrk=cms.double(RetrieveMuFromTrk["maxPtTrk"]),
@@ -309,7 +313,7 @@ process.ntuplesSeq *= process.tables
 
 process.load( "HLTrigger.HLTanalyzers.hlTrigReport_cfi" )
 process.options = cms.untracked.PSet(
-    wantSummary = cms.untracked.bool(True),
+    wantSummary = cms.untracked.bool(False),
 )
 
 process.hlTrigReport.HLTriggerResults   = cms.InputTag("TriggerResults", "", "HLT")

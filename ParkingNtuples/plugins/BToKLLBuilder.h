@@ -70,7 +70,6 @@ BToKLLBuilder<Lepton, Fitter>::build(const reco::BeamSpot& bs, LeptonCollection&
 
   for(auto &lepton_pair : *lepton_pairs) {
     for(auto &track : tracks) {
-      itrk++;
       if( !k_selection_(*track.obj) ) continue;
       
       math::PtEtaPhiMLorentzVector k_p4(
