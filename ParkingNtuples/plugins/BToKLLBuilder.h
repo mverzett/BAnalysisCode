@@ -121,9 +121,9 @@ BToKLLBuilder<Lepton, Fitter>::build(const reco::BeamSpot& bs, LeptonCollection&
       if( !candidate_post_vtx_selection_(cand) ) continue;
 
       // store the candidate and mark the indices
-      int l1_idx = (lepton_pair.l1->idx == -1) ? nleps++ : lepton_pair.l1->idx;
-      int l2_idx = (lepton_pair.l2->idx == -1) ? nleps++ : lepton_pair.l2->idx;
-      int trk_idx = (track.idx == -1) ? ntrks++ : track.idx;
+      int l1_idx = (lepton_pair.l1->idx == -1) ? ++nleps : lepton_pair.l1->idx;
+      int l2_idx = (lepton_pair.l2->idx == -1) ? ++nleps : lepton_pair.l2->idx;
+      int trk_idx = (track.idx == -1) ? ++ntrks : track.idx;
       lepton_pair.l1->idx = l1_idx;
       lepton_pair.l2->idx = l2_idx;
       track.idx = trk_idx;

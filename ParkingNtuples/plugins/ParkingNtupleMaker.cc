@@ -669,9 +669,9 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
   // cached vectors need to be built here AFTER the original vectors
   // are done, otherwise the vector self-growing feature will
   // mess up the pointer location and lead to segfaults
-  CachedMuonCollection cached_muons = vec_to_cached(muon_store, muon_ttracks, true);
-  CachedElectronCollection cached_electrons = vec_to_cached(electron_store, electron_ttracks, true);
-  CachedCandidateCollection cached_candidates = vec_to_cached(candidate_store, candidate_ttracks, true);
+  CachedMuonCollection cached_muons = vec_to_cached(muon_store, muon_ttracks, true); // true: keep all muons no matter what
+  CachedElectronCollection cached_electrons = vec_to_cached(electron_store, electron_ttracks, false); // false: keep only those electron that make a B candidate
+  CachedCandidateCollection cached_candidates = vec_to_cached(candidate_store, candidate_ttracks, false);
   
   // Di-lepton caches (to be used later when building the B candidates)
   // the key is the index of the two leptons
