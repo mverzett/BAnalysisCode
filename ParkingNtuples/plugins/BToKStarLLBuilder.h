@@ -76,13 +76,23 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
         if(&pi_track == &k_track) continue;
         if( !pi_selection_(*pi_track.obj) ) continue;
       
+        math::PtEtaPhiMLorentzVector k_p4(
+          k_track.obj->pt(), 
+          k_track.obj->eta(),
+          k_track.obj->phi(),
+          K_MASS
+        );
         pat::CompositeCandidate cand;
         cand.addDaughter( *lepton_pair.l1->obj );
         cand.addDaughter( *lepton_pair.l2->obj );
         cand.addDaughter( *k_track.obj );
         cand.addDaughter( *pi_track.obj );
-        cand.setP4(lepton_pair.dilepton->p4() + k_track.obj->p4() + pi_track.obj->p4());
-      
+        cand.setP4(lepton_pair.dilepton->p4() + k_p4 + pi_track.obj->p4());
+        cand.setCharge(
+          lepton_pair.dilepton->charge() + pi_track.obj->charge() + 
+          k_track.obj->charge()
+          );
+
         // propagate UserFloats from the dilepton pair
         for(const auto& float_name : lepton_pair.dilepton->userFloatNames()) {
           cand.addUserFloat(
@@ -107,10 +117,10 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
         if( !candidate_post_vtx_selection_(cand) ) continue;
 
         // store the candidate and mark the indices
-        int l1_idx = (lepton_pair.l1->idx == -1) ? nleps++ : lepton_pair.l1->idx;
-        int l2_idx = (lepton_pair.l2->idx == -1) ? nleps++ : lepton_pair.l2->idx;
-        int k_idx = (k_track.idx == -1) ? ntrks++ : k_track.idx;
-        int pi_idx = (pi_track.idx == -1) ? ntrks++ : pi_track.idx;
+        int l1_idx = (lepton_pair.l1->idx == -1) ? ++nleps : lepton_pair.l1->idx;
+        int l2_idx = (lepton_pair.l2->idx == -1) ? ++nleps : lepton_pair.l2->idx;
+        int k_idx  = (k_track.idx == -1)  ? ++ntrks : k_track.idx;
+        int pi_idx = (pi_track.idx == -1) ? ++ntrks : pi_track.idx;
         lepton_pair.l1->idx = l1_idx;
         lepton_pair.l2->idx = l2_idx;
         k_track.idx = k_idx;

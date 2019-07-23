@@ -83,6 +83,7 @@ BToKLLBuilder<Lepton, Fitter>::build(const reco::BeamSpot& bs, LeptonCollection&
       cand.addDaughter( *lepton_pair.l2->obj );
       cand.addDaughter( *track.obj );
       cand.setP4(lepton_pair.dilepton->p4() + k_p4);//+ track.obj->p4());
+      cand.setCharge(lepton_pair.dilepton->charge() + track.obj->charge());
 
       auto dr_info = min_max_dr(cand);
       cand.addUserFloat("m_ll"  , lepton_pair.dilepton->mass());
