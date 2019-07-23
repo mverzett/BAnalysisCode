@@ -13,6 +13,9 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
+
 #include <vector>
 #include <algorithm>
 #include <limits>
@@ -65,8 +68,6 @@ std::unique_ptr< vector<T> > cached_to_vec(std::vector< ChachedObject<T> > in) {
   return std::move(out);
 }
 
-
-
 constexpr double K_MASS = 0.493677;
 constexpr double PI_MASS = 0.139571;
 constexpr float LEP_SIGMA = 0.0000001;
@@ -84,6 +85,27 @@ inline std::pair<float, float> min_max_dr(const pat::CompositeCandidate & cand) 
     }
   }
   return make_pair(min_dr, max_dr);
+}
+
+template<typename FITTER>
+inline double cos_theta_2D(const FITTER& fitter, const reco::BeamSpot &bs, const reco::Candidate::LorentzVector& p4) {
+  if(!fitter.success()) return -2;
+  GlobalPoint point = fitter.fitted_vtx();
+  auto bs_pos = bs.position(point.z());
+  math::XYZVector delta(point.x() - bs_pos.x(), point.y() - bs_pos.y(), 0.);
+  math::XYZVector pt(p4.px(), p4.py(), 0.);
+  double den = (delta.R() * pt.R());
+  return (den != 0.) ? delta.Dot(pt)/den : -2;
+}
+
+template<typename FITTER>
+inline Measurement1D l_xy(const FITTER& fitter, const reco::BeamSpot &bs) {
+  if(!fitter.success()) return {-2, -2};
+  GlobalPoint point = fitter.fitted_vtx();
+  GlobalError err = fitter.fitted_vtx_uncertainty();
+  auto bs_pos = bs.position(point.z());
+  GlobalPoint delta(point.x() - bs_pos.x(), point.y() - bs_pos.y(), 0.);  
+  return {delta.perp(), err.rerr(delta)};
 }
 
 #endif

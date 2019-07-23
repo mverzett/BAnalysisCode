@@ -58,11 +58,19 @@ public:
 
     for(size_t il1 = 0; il1 < leptons.size(); ++il1) {
       Lepton* l1 = leptons[il1].obj;
-      if( !l1_selection_( *l1 ) ) continue; // cut on lepton 1
+      bool l1_as_l1 = l1_selection_(*l1);
+      bool l1_as_l2 = l2_selection_(*l1);
+      if( !(l1_as_l1 || l1_as_l2) ) continue; 
     
       for(size_t il2 = il1+1; il2 < leptons.size(); ++il2) {
         Lepton* l2 = leptons[il2].obj;
-        if( !l2_selection_( *l2 ) ) continue; // cut on lepton 2
+        bool l2_as_l1 = l1_selection_(*l2);
+        bool l2_as_l2 = l2_selection_(*l2);
+        if( !(l2_as_l1 || l2_as_l2) ) continue;
+
+        bool l1_l2 = l1_as_l1 && l2_as_l2;
+        bool l2_l1 = l2_as_l1 && l1_as_l2;
+        if( !(l1_l2 || l2_l1) ) continue; // make sure both leptons pass opposite selections
 
         // check cache for the pair
         auto key = std::make_pair(il1, il2);
@@ -79,7 +87,11 @@ public:
         }
 
         pat::CompositeCandidate &lepton_pair = iter->second;
+        lepton_pair.setP4(l1->p4() + l2->p4());
+        lepton_pair.setCharge(l1->charge() + l2->charge());
+        //std::cout << "(" << il1 << ", " << il2 << "): " << lepton_pair.charge() << " / " << lepton_pair.mass() << std::endl;
         if( !dilepton_pre_vtx_selection_(lepton_pair) ) continue; // before making the SV, cut on the info we have
+        //std::cout << "PASS!" << std::endl;
 
         // check if we have the SV already
         if( !lepton_pair.hasUserFloat("sv_chi2") ) {

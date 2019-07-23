@@ -1,6 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
 
+def ufloat(expr, precision=-1):
+    return Var('userFloat("%s")' % expr, float, precision = precision)
+
 muonTable = cms.EDProducer(
     "SimpleCandidateFlatTableProducer",
     src = cms.InputTag("FIXME"),
@@ -91,6 +94,10 @@ bToKEETable = cms.EDProducer(
         el1Idx = Var('userInt("l1_idx")', int),
         el2Idx = Var('userInt("l2_idx")', int),
         kIdx   = Var('userInt("k_idx" )', int),
+        chi2 = ufloat('sv_chi2'),
+        svprob = ufloat('sv_prob'),
+        mll = ufloat('m_ll'),
+        cos2D = ufloat('cos_theta_2D'),
     ) 
 )
 

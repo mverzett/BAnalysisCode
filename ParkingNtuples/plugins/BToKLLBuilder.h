@@ -20,6 +20,8 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include "helpers.h"
 #include <algorithm>
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
 
 template<typename Lepton, typename Fitter>
 class BToKLLBuilder {
@@ -31,7 +33,7 @@ public:
   ~BToKLLBuilder() {}
 
   // Nothing is const here as we modify everything
-  std::unique_ptr< pat::CompositeCandidateCollection > build(LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
+  std::unique_ptr< pat::CompositeCandidateCollection > build(const reco::BeamSpot&, LeptonCollection&, CachedCandidateCollection&, DiLeptonCache &) const;
 
 private:
   const bool active_ = false;
@@ -51,12 +53,13 @@ BToKLLBuilder<Lepton, Fitter>::BToKLLBuilder(const edm::ParameterSet& cfg):
 
 template<typename Lepton, typename Fitter>
 std::unique_ptr< pat::CompositeCandidateCollection >
-BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
+BToKLLBuilder<Lepton, Fitter>::build(const reco::BeamSpot& bs, LeptonCollection& leptons, CachedCandidateCollection& tracks, DiLeptonCache &cache) const {
   auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
   if(!active_) return std::move(ret_val);
   
   // get dilepton pairs
   auto lepton_pairs = ll_builder_.build(leptons, cache);
+  // std::cout << "Lepton pairs: " << lepton_pairs->size() << std::endl;
 
   // get number of stored electrons and tracks
   int nleps = -1;
@@ -67,14 +70,23 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
 
   for(auto &lepton_pair : *lepton_pairs) {
     for(auto &track : tracks) {
+      itrk++;
       if( !k_selection_(*track.obj) ) continue;
       
+      math::PtEtaPhiMLorentzVector k_p4(
+        track.obj->pt(), 
+        track.obj->eta(),
+        track.obj->phi(),
+        K_MASS
+        );
       pat::CompositeCandidate cand;
       cand.addDaughter( *lepton_pair.l1->obj );
       cand.addDaughter( *lepton_pair.l2->obj );
       cand.addDaughter( *track.obj );
+      cand.setP4(lepton_pair.dilepton->p4() + k_p4);//+ track.obj->p4());
 
       auto dr_info = min_max_dr(cand);
+      cand.addUserFloat("m_ll"  , lepton_pair.dilepton->mass());
       cand.addUserFloat("min_dr", dr_info.first);
       cand.addUserFloat("max_dr", dr_info.second);
       
@@ -94,9 +106,18 @@ BToKLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandidateC
         {lepton_pair.l1->obj->mass(), lepton_pair.l2->obj->mass(), K_MASS},
         {LEP_SIGMA, LEP_SIGMA, K_SIGMA} //some small sigma for the lepton mass
         );
+      // cand.setVertex(fitter.fitted_vtx().position()); FIXME
+      cand.addUserInt("sv_OK" , fitter.success());
       cand.addUserFloat("sv_chi2", fitter.chi2());
       cand.addUserFloat("sv_ndof", fitter.dof()); // float??
       cand.addUserFloat("sv_prob", fitter.prob());
+      cand.addUserFloat(
+        "cos_theta_2D", 
+        cos_theta_2D(fitter, bs, cand.p4())
+        );
+      auto lxy = l_xy(fitter, bs);
+      cand.addUserFloat("l_xy", lxy.value());
+      cand.addUserFloat("l_xy_unc", lxy.error());
 
       if( !candidate_post_vtx_selection_(cand) ) continue;
 

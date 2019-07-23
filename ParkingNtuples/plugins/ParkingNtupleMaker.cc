@@ -574,6 +574,7 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
     
     // Store info in stores
     muon_store.push_back(mu);    
+    muon_store.back().addUserInt("soft_id", muon_store.back().isSoftMuon(firstGoodVertex));
     muon_ttracks.emplace_back(reco::TransientTrack(*mu.bestTrack(), &(*bFieldHandle))); // Better way with the TTrack builder?
   }
   if (DRtrgMu>TrgConeCut && TrgConeCut>0 && saveOnlyHLTFires) {
@@ -678,11 +679,8 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
   std::map< std::pair<size_t, size_t>, pat::CompositeCandidate > diel_cache;
 
   // Create candidate collections
-  //std::cout << "B->Kuu" << std::endl;
-  auto b_kmumu = b_to_kmumu_builder_.build(cached_muons, cached_candidates, dimu_cache);
-  //std::cout << "B->Kee" << std::endl;
-  auto b_kee   = b_to_kee_builder_.build(cached_electrons, cached_candidates, diel_cache);
-
+  auto b_kmumu = b_to_kmumu_builder_.build(*theBeamSpot, cached_muons, cached_candidates, dimu_cache);
+  auto b_kee   = b_to_kee_builder_.build(*theBeamSpot, cached_electrons, cached_candidates, diel_cache);
   // Copy only candidates that have an index, meaning they formed a candidate somewhere
   CachedMuonCollection      used_muons;
   CachedElectronCollection  used_electrons;
@@ -744,6 +742,7 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
  
   //e pairs
   if(AddeeK || OnlyKee ){
+    size_t nee = 0;
     for(int iel=0; iel<nt.nel; ++iel){
       if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
         if ( deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel], nt.el_phi[iel]) > DRgenCone && \
@@ -751,10 +750,16 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
              continue;
       }
       for (int iel2=iel+1; iel2<nt.nel; ++iel2){
-        if (nt.el_charge[iel]==nt.el_charge[iel2]) continue;
+        // std::cout << "pair (" << iel << ", " << iel2 << ")";
+        if (nt.el_charge[iel]==nt.el_charge[iel2]) {
+          // std::cout << " fails for charge" << std::endl;
+          continue;
+        }
         if (nt.el_pt[iel2] < Electron1PtCut && \
-            nt.el_pt[iel]  < Electron1PtCut) 
-            continue;
+            nt.el_pt[iel]  < Electron1PtCut) {
+          // std::cout << " fails for pt cut" << std::endl;
+          continue;
+        }
         if (UseDirectlyGenBeeK && !iEvent.isRealData() ){
           if (deltaR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
               deltaR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
@@ -762,21 +767,31 @@ ParkingNtupleMaker::filter(edm::Event& iEvent, edm::EventSetup const& iSetup)
         }
         if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
           if (nt.el_mva_unbiased[iel]  < MVAEl1Cut && \
-              nt.el_mva_unbiased[iel2] < MVAEl1Cut) 
-              continue;
+              nt.el_mva_unbiased[iel2] < MVAEl1Cut) {
+            // std::cout << " fails for MVA cut" << std::endl;
+            continue;
+          }
         }
-        if ( fabs(nt.el_vz[iel]-nt.el_vz[iel2]) > DzeeMaxCut) continue;
+        if ( fabs(nt.el_vz[iel]-nt.el_vz[iel2]) > DzeeMaxCut) {
+          // std::cout << " fails for DZ_ee cut" << std::endl;
+          continue;
+        }
         TLorentzVector vel1,vel2; 
         vel1.SetPtEtaPhiM(nt.el_pt[iel] , nt.el_eta[iel] , nt.el_phi[iel] , 0.000511);
         vel2.SetPtEtaPhiM(nt.el_pt[iel2], nt.el_eta[iel2], nt.el_phi[iel2], 0.000511);
         if( (vel1+vel2).M() < MLLmin_Cut || \
-            (vel1+vel2).M() > MLLmax_Cut) 
-            continue; 
+            (vel1+vel2).M() > MLLmax_Cut)  {
+          // std::cout << " fails for Mll cut " << std::endl;
+          continue; 
+        }
         muTrack1.push_back(ettks[iel]); 
         muTrack2.push_back(ettks[iel2]);
+        nee++;
         used_eTrack_index.emplace_back(iel,iel2);
+        // std::cout << "EE(" << iel << ", " << iel2 << ")" << std::endl;
       }
     }
+    std::cout << "George " << nt.nel << " --> n_ee: " << nee << std::endl;
   }
 
   if (used_muTrack_index.size()==0 && used_eTrack_index.size()==0){

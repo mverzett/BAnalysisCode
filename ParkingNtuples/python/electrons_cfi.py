@@ -25,6 +25,7 @@ electronsForAnalysis = cms.EDProducer(
   pfSrc    = cms.InputTag('pfElectronsForAnalysis'),
   drForCleaning = cms.double(0.00),
   dzForCleaning = cms.double(0.00),
+  useGsfModeForP4 = cms.bool(True),
 )
 
 electrons = cms.Sequence(

@@ -81,6 +81,7 @@ BToKStarLLBuilder<Lepton, Fitter>::build(LeptonCollection& leptons, CachedCandid
         cand.addDaughter( *lepton_pair.l2->obj );
         cand.addDaughter( *k_track.obj );
         cand.addDaughter( *pi_track.obj );
+        cand.setP4(lepton_pair.dilepton->p4() + k_track.obj->p4() + pi_track.obj->p4());
       
         // propagate UserFloats from the dilepton pair
         for(const auto& float_name : lepton_pair.dilepton->userFloatNames()) {
