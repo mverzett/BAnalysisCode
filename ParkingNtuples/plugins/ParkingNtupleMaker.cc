@@ -830,17 +830,12 @@ ParkingNtupleMakerT<T1>::analyze(const edm::Event& iEvent, const edm::EventSetup
       }
       for (int iel2=iel+1; iel2<nt.nel; ++iel2){
         if (nt.el_charge[iel]==nt.el_charge[iel2]) continue;
-        if (nt.el_pt[iel2] < Electron1PtCut && \
-            nt.el_pt[iel]  < Electron1PtCut) 
-            continue;
+        bool e1_tight = nt.el_pt[iel] > Electron1PtCut && nt.el_mva_unbiased[iel] > MVAEl1Cut;
+        bool e2_tight = nt.el_pt[iel2] > Electron1PtCut && nt.el_mva_unbiased[iel2] > MVAEl1Cut;
+        if(!e1_tight && !e2_tight) continue;
         if (UseDirectlyGenBeeK && !data){
           if (DR(EtaPhiE1.first, EtaPhiE1.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone && \
               DR(EtaPhiE2.first, EtaPhiE2.second, nt.el_eta[iel2], nt.el_phi[iel2]) > DRgenCone) 
-              continue;
-        }
-        if (nt.el_islowpt[iel] && nt.el_islowpt[iel2]){
-          if (nt.el_mva_unbiased[iel]  < MVAEl1Cut && \
-              nt.el_mva_unbiased[iel2] < MVAEl1Cut) 
               continue;
         }
         if ( fabs(nt.el_vz[iel]-nt.el_vz[iel2]) > DzeeMaxCut) continue;
