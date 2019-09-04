@@ -3,9 +3,9 @@ import FWCore.ParameterSet.Config as cms
 
 
 IsData=True
-Run="A"
-Nentries=1000;  
-output="output_flat.root"; 
+Run="B"
+Nentries=10000;  
+output="output_flat_DATA_10K.root"; 
 mlog=100; 
 saveTrk=False; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
@@ -36,7 +36,8 @@ Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
 # '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
 #'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
-'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+#'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
+'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root'
 ]
 ############ for debug evt 1242 run 1 ls 13
  #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
