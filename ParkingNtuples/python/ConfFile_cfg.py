@@ -2,11 +2,11 @@ import FWCore.ParameterSet.Config as cms
 #quick config
 
 
-IsData=False
+IsData=True
 Run="B"
 Nentries=1000;  
-output="output_flat.root"; 
-mlog=10; 
+output="events_no_trk_picked.root"; 
+mlog=1; 
 saveTrk=True; 
 NtupleClasses="flat"; #options: all,auto,class,lite or flat
 
@@ -27,18 +27,15 @@ MuPtCut=0.5;
 RetrieveMuFromTrk=dict(algo=False,maxPtTrk=4)
 RecoBtoKLepLep=True; 
 RecoBtoKstarLepLep=False; 
-SkipEventWithNoRecoB=True
+SkipEventWithNoRecoB=False
 addlostTrk=True
 RefitTracksForB="mu" #options: mu (only mu), both (mu + e) and none(PF used).Refitted tracks used to calculate B properties.
 Bcuts=dict(Prob=0.00000001,Cos=0,MinM=4.5,MaxM=6,MinMll=0,MaxMll=5,PtMin=3.0);
 GenRecoMatch=False
 Bdecaymatch=dict(PdgId=521,LepId=11,KId=321,Jtoll=True,DR=0.1)
 File=[
-# '/store/data/Run2018A/ParkingBPH6/MINIAOD/05May2019-v1/260000/6477D465-4909-E34B-A6CE-D7497999E12B.root'
-#'/store/user/bainbrid/lowpteleid/BuToKJpsi_Toee_MuFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/crab_lowpteleid/190328_152903/0000/step3_inMINIAODSIM_130.root'
-#'root://cms-xrd-global.cern.ch//store/data/Run2018A/ParkingBPH2/MINIAOD/05May2019-v1/250001/FEECE314-65F3-034B-A6DB-792916EE4EF5.root'
-#'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root'
-'/store/mc/RunIIAutumn18MiniAOD/BuToKMuMu_probefilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/PUPoissonAve20_BParking_102X_upgrade2018_realistic_v15-v2/40000/E5179C93-BFAA-6240-AAE7-A0A4DC410E4C.root'
+'/store/data/Run2018B/ParkingBPH4/MINIAOD/05May2019-v2/230000/6B5A24B1-0E6E-504B-8331-BD899EB60110.root'
+#'/store/cmst3/group/bpark/BToKmumu_1000Events_MINIAOD.root'
 ]
 ############ for debug evt 1242 run 1 ls 13
  #eventsToProcess=cms.untracked.VEventRange('1:1242:13-1:1242:13'),
@@ -118,6 +115,9 @@ process.load('PhysicsTools.PatAlgos.slimming.unpackedTracksAndVertices_cfi')
 #)
 
 process.MessageLogger.cerr.FwkReport.reportEvery = mlog #Nentries/100
+## process.MessageLogger.detailedInfo = cms.untracked.PSet(  threshold = cms.untracked.string('DEBUG'))
+## process.MessageLogger.debugModules = cms.untracked.vstring('*')
+## process.MessageLogger.destinations = cms.untracked.vstring(  'detailedInfo')
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -140,6 +140,7 @@ process.source = cms.Source("PoolSource",
           ),
 
 )
+process.source.eventsToProcess = cms.untracked.VEventRange('317511:367:550359134')
 '''process.selectedPFCandidatesHP = cms.EDFilter("PATPackedCandidateSelector",
     src = cms.InputTag("packedPFCandidates"),
     cut = cms.string("pt() > 0.8 && abs(eta()) < 2.5 && trackHighPurity() > 0")
@@ -233,7 +234,7 @@ process.demo = cms.EDAnalyzer('ParkingNtupleMaker',
       CombineCone=cms.double(elcuts["PFLowPtCone"]),
       MKstarMin_Cut=cms.double(0.742),
       MKstarMax_Cut=cms.double(1.042),
-      LepTrkExclusionCone=cms.double(0.005),
+                                 LepTrkExclusionCone=cms.double(-1),
       AddLostTracks=cms.bool(addlostTrk),
       RefitTracks=cms.string(RefitTracksForB),
       OnlyKee=cms.bool(Onlyel),
